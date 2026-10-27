@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pokémon 2D Web Adventure</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  background: #181c24;
+  background-image: 
+    radial-gradient(circle at 50% 20%, #293241 0%, #11141c 100%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 4px);
+  color: #e0e6ed;
+  font-family: 'Press Start 2P', monospace, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+#app {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Header */
+.game-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #252b36;
+  border: 3px solid #3c4659;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand h1 {
+  font-size: 13px;
+  color: #ffcc00;
+  text-shadow: 2px 2px 0 #cc2222;
+  letter-spacing: 1px;
+}
+
+.pokeball-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, #ee1515 50%, #ffffff 50%);
+  border: 2px solid #222;
+  position: relative;
+}
+
+.pokeball-icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border: 2px solid #222;
+  border-radius: 50%;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-retro {
+  background: #3b4557;
+  color: #fff;
+  border: 2px solid #586680;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 9px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  box-shadow: 0 2px 0 #1b212b;
+}
+
+.btn-retro:hover {
+  background: #4b586e;
+}
+
+.btn-retro:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0;
+}
+
+/* Console Body & Screen Frame */
+.console-body {
+  width: 100%;
+  background: #8b3a3a;
+  background: linear-gradient(135deg, #c73838 0%, #9c2727 100%);
+  border-radius: 20px;
+  border: 4px solid #6b1515;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.25);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.screen-frame {
+  width: 100%;
+  max-width: 580px;
+  background: #2b313d;
+  border-radius: 12px;
+  border: 4px solid #1a1e26;
+  padding: 12px;
+  box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.6);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.screen-glare {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+#game-canvas {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 420px;
+  background: #000;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border-radius: 6px;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.8);
+  display: block;
+}
+
+/* Controls Panel */
+.controls-container {
+  width: 100%;
+  max-width: 580px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+}
+
+/* D-PAD */
+.dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dpad-middle {
+  display: flex;
+  align-items: center;
+}
+
+.dpad-btn {
+  width: 38px;
+  height: 38px;
+  background: #22262e;
+  color: #778296;
+  border: 2px solid #15181e;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.05s ease;
+  box-shadow: 0 3px 0 #0f1115;
+}
+
+.dpad-btn.up {
+  border-radius: 6px 6px 0 0;
+}
+.dpad-btn.down {
+  border-radius: 0 0 6px 6px;
+}
+.dpad-btn.left {
+  border-radius: 6px 0 0 6px;
+}
+.dpad-btn.right {
+  border-radius: 0 6px 6px 0;
+}
+
+.dpad-center {
+  width: 38px;
+  height: 38px;
+  background: #22262e;
+  border-top: 2px solid #15181e;
+  border-bottom: 2px solid #15181e;
+}
+
+.dpad-btn:active, .dpad-btn.pressed {
+  background: #444d5c;
+  color: #fff;
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #0f1115;
+}
+
+/* Instructions Panel */
+.instructions-panel {
+  flex: 1;
+  background: #1e222a;
+  border: 2px solid #2f3642;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 8px;
+  line-height: 1.6;
+}
+
+.instructions-panel h3 {
+  color: #ffcc00;
+  margin-bottom: 4px;
+  font-size: 9px;
+}
+
+.instructions-panel p {
+  color: #a0aec0;
+  margin: 3px 0;
+}
+
+kbd {
+  background: #2d3748;
+  color: #edf2f7;
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid #4a5568;
+  font-family: inherit;
+}
+
+/* Action Buttons (A & B) */
+.action-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  transform: rotate(-15deg);
+}
+
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.round-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.05s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-a {
+  background: #2b78e4;
+  border: 3px solid #184ea0;
+  box-shadow: 0 4px 0 #0d2f66;
+}
+
+.btn-b {
+  background: #e63946;
+  border: 3px solid #a61c28;
+  box-shadow: 0 4px 0 #730f18;
+}
+
+.system-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.pill-btn {
+  background: #333a46;
+  color: #cbd5e1;
+  border: 2px solid #1a1e24;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 8px;
+  padding: 5px 12px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #111418;
+  transform: rotate(-20deg);
+  touch-action: manipulation;
+}
+
+.pill-btn:active, .pill-btn.pressed {
+  transform: rotate(-20deg) translateY(2px);
+  box-shadow: 0 1px 0 #111418;
+  background: #4a5568;
+}
+
+.round-btn:active, .round-btn.pressed {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.btn-label {
+  font-size: 7px;
+  color: #ffe6e6;
+  transform: rotate(15deg);
+  white-space: nowrap;
+}
+
+/* Footer */
+.game-footer {
+  text-align: center;
+  font-size: 8px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  body {
+    padding: 6px;
+  }
+  .console-body {
+    padding: 10px;
+    border-radius: 12px;
+  }
+  .instructions-panel {
+    display: none;
+  }
+  .controls-container {
+    justify-content: space-around;
+  }
+  .action-buttons {
+    transform: rotate(0deg);
+  }
+  .btn-label {
+    transform: rotate(0deg);
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Header Controls -->
+    <header class="game-header">
+      <div class="brand">
+        <span class="pokeball-icon"></span>
+        <h1>POKÉMON 2D WEB</h1>
+      </div>
+      <div class="header-actions">
+        <button id="btn-sound" class="btn-retro" title="Toggle Sound (M)">🔊 AUDIO ON</button>
+        <button id="btn-fullscreen" class="btn-retro" title="Toggle Fullscreen">⛶ FULL</button>
+      </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="console-body">
+      <div class="screen-frame">
+        <div class="screen-glare"></div>
+        <canvas id="game-canvas" width="320" height="240"></canvas>
+      </div>
+
+      <!-- Controls & Quick Guide -->
+      <div class="controls-container">
+        <!-- Virtual D-PAD -->
+        <div class="dpad" id="dpad">
+          <button class="dpad-btn up" data-key="up" aria-label="Up">▲</button>
+          <div class="dpad-middle">
+            <button class="dpad-btn left" data-key="left" aria-label="Left">◀</button>
+            <div class="dpad-center"></div>
+            <button class="dpad-btn right" data-key="right" aria-label="Right">▶</button>
+          </div>
+          <button class="dpad-btn down" data-key="down" aria-label="Down">▼</button>
+        </div>
+
+        <!-- System / Help Info -->
+        <div class="instructions-panel">
+          <h3>🎮 KONTROL:</h3>
+          <p><kbd>W A S D</kbd> / <kbd>↑ ↓ ← →</kbd> : Gerak / Navigasi</p>
+          <p><kbd>Z</kbd> / <kbd>Space</kbd> : [A] Aksi / Pilih / Bicara</p>
+          <p><kbd>X</kbd> : [B] Batal | <kbd>Shift</kbd> : Lari Cepat</p>
+          <p><kbd>Enter</kbd> / <kbd>Esc</kbd> : [START] Menu / Pokédex / Save</p>
+        </div>
+
+        <!-- Action Buttons (A, B) & Start -->
+        <div class="action-column">
+          <div class="action-buttons">
+            <div class="btn-group">
+              <button class="round-btn btn-b" data-key="b" aria-label="B Button">B</button>
+              <span class="btn-label">Batal (X)</span>
+            </div>
+            <div class="btn-group">
+              <button class="round-btn btn-a" data-key="a" aria-label="A Button">A</button>
+              <span class="btn-label">Pilih (Z)</span>
+            </div>
+          </div>
+          <div class="system-buttons">
+            <button class="pill-btn round-btn" data-key="start" aria-label="Start Button">START</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="game-footer">
+      <p>Dibuat dengan HTML5 Canvas, Web Audio API & TypeScript • Berjalan 100% di browser</p>
+    </footer>
+  </div>
+
+  <script>
+"use strict";(()=>{var H=class{ctx=null;musicGain=null;sfxGain=null;isMuted=!1;currentBgm=null;bgmInterval=null;constructor(){}initCtx(){if(!this.ctx){let e=window.AudioContext||window.webkitAudioContext;this.ctx=new e,this.musicGain=this.ctx.createGain(),this.sfxGain=this.ctx.createGain(),this.musicGain.gain.value=.25,this.sfxGain.gain.value=.35,this.musicGain.connect(this.ctx.destination),this.sfxGain.connect(this.ctx.destination)}this.ctx.state==="suspended"&&this.ctx.resume()}unlock(){this.initCtx()}toggleMute(){if(this.isMuted=!this.isMuted,this.musicGain&&this.sfxGain){let e=this.isMuted?0:1;this.musicGain.gain.value=e*.25,this.sfxGain.gain.value=e*.35}return this.isMuted}getMuted(){return this.isMuted}playTone(e,s,t,o,a){if(this.isMuted||(this.initCtx(),!this.ctx||!this.sfxGain))return;let l=o??this.ctx.currentTime,i=this.ctx.createOscillator(),r=this.ctx.createGain();i.type=s,i.frequency.setValueAtTime(e,l),a&&i.frequency.exponentialRampToValueAtTime(Math.max(10,a),l+t),r.gain.setValueAtTime(.3,l),r.gain.linearRampToValueAtTime(.01,l+t),i.connect(r),r.connect(this.sfxGain),i.start(l),i.stop(l+t)}playSelect(){this.playTone(600,"square",.05)}playConfirm(){if(this.initCtx(),!this.ctx)return;let e=this.ctx.currentTime;this.playTone(523.25,"square",.06,e),this.playTone(659.25,"square",.08,e+.06)}playCancel(){if(this.initCtx(),!this.ctx)return;let e=this.ctx.currentTime;this.playTone(400,"square",.05,e),this.playTone(280,"square",.08,e+.05)}playBump(){this.playTone(100,"triangle",.08,void 0,40)}playGrassRustle(){if(this.isMuted||(this.initCtx(),!this.ctx||!this.sfxGain))return;let e=this.ctx.sampleRate*.06,s=this.ctx.createBuffer(1,e,this.ctx.sampleRate),t=s.getChannelData(0);for(let i=0;i<e;i++)t[i]=Math.random()*2-1;let o=this.ctx.createBufferSource();o.buffer=s;let a=this.ctx.createBiquadFilter();a.type="bandpass",a.frequency.value=800;let l=this.ctx.createGain();l.gain.setValueAtTime(.12,this.ctx.currentTime),l.gain.linearRampToValueAtTime(.01,this.ctx.currentTime+.06),o.connect(a),a.connect(l),l.connect(this.sfxGain),o.start()}playEncounter(){if(this.initCtx(),!this.ctx)return;let e=this.ctx.currentTime;[440,554,659,880,1108,1318,1760].forEach((t,o)=>{this.playTone(t,"sawtooth",.05,e+o*.035)})}playHit(){if(this.isMuted||(this.initCtx(),!this.ctx||!this.sfxGain))return;let e=this.ctx.currentTime;this.playTone(180,"square",.12,e,40);let s=Math.floor(this.ctx.sampleRate*.08),t=this.ctx.createBuffer(1,s,this.ctx.sampleRate),o=t.getChannelData(0);for(let i=0;i<s;i++)o[i]=(Math.random()*2-1)*(1-i/s);let a=this.ctx.createBufferSource();a.buffer=t;let l=this.ctx.createGain();l.gain.value=.3,a.connect(l),l.connect(this.sfxGain),a.start(e)}playSpecial(e){if(this.initCtx(),!this.ctx)return;let s=this.ctx.currentTime;if(e==="fire")this.playTone(200,"sawtooth",.25,s,600),this.playTone(300,"square",.25,s+.05,100);else if(e==="water")this.playTone(500,"sine",.2,s,1200),this.playTone(800,"sine",.2,s+.1,400);else if(e==="electric")for(let t=0;t<4;t++)this.playTone(600+Math.random()*400,"sawtooth",.06,s+t*.05);else this.playTone(400,"triangle",.15,s,900),this.playTone(900,"triangle",.15,s+.08,300)}playBallThrow(){this.playTone(300,"sine",.2,void 0,800)}playBallWobble(){this.playTone(500,"triangle",.1,void 0,350)}playCatchSuccess(){if(this.initCtx(),!this.ctx)return;let e=this.ctx.currentTime;[523,659,784,1046].forEach((t,o)=>{this.playTone(t,"square",.12,e+o*.1)})}playLevelUp(){if(this.initCtx(),!this.ctx)return;let e=this.ctx.currentTime,s=[{f:523,d:.1},{f:659,d:.1},{f:784,d:.1},{f:1046,d:.25},{f:880,d:.1},{f:1046,d:.4}],t=e;s.forEach(o=>{this.playTone(o.f,"square",o.d,t),t+=o.d+.02})}playHealChime(){if(this.initCtx(),!this.ctx)return;let e=this.ctx.currentTime;[659,587,523,659,784,1046].forEach((t,o)=>{this.playTone(t,"sine",.18,e+o*.14)})}playFaint(){if(this.initCtx(),!this.ctx)return;let e=this.ctx.currentTime;this.playTone(350,"sawtooth",.35,e,90)}stopBgm(){this.bgmInterval&&(clearInterval(this.bgmInterval),this.bgmInterval=null),this.currentBgm=null}playOverworldBgm(){if(this.currentBgm==="overworld")return;this.stopBgm(),this.currentBgm="overworld",this.initCtx();let e=[392,440,523,587,659,523,392,0,440,523,587,659,784,659,587,0,659,587,523,440,392,440,523,0,587,659,523,440,392,0,392,0],s=[261,261,329,329,392,392,329,329,220,220,293,293,349,349,293,293,261,261,329,329,392,392,329,329,196,196,261,261,261,261,261,0],t=0,o=240,a=()=>{if(this.isMuted||!this.ctx||!this.musicGain)return;let l=this.ctx.currentTime,i=e[t%e.length],r=s[t%s.length];if(i>0){let c=this.ctx.createOscillator(),h=this.ctx.createGain();c.type="square",c.frequency.setValueAtTime(i,l),h.gain.setValueAtTime(.12,l),h.gain.exponentialRampToValueAtTime(.01,l+.2),c.connect(h),h.connect(this.musicGain),c.start(l),c.stop(l+.21)}if(r>0){let c=this.ctx.createOscillator(),h=this.ctx.createGain();c.type="triangle",c.frequency.setValueAtTime(r*.5,l),h.gain.setValueAtTime(.18,l),h.gain.linearRampToValueAtTime(.01,l+.22),c.connect(h),h.connect(this.musicGain),c.start(l),c.stop(l+.23)}t++};this.bgmInterval=window.setInterval(a,o),a()}playBattleBgm(){if(this.currentBgm==="battle")return;this.stopBgm(),this.currentBgm="battle",this.initCtx();let e=[146,146,164,146,174,146,164,146,130,130,146,130,164,130,146,130,123,123,130,123,146,123,130,123,146,164,174,196,220,246,261,293],s=[0,587,0,587,659,587,698,784,0,523,0,523,587,523,659,698,0,493,0,493,523,493,587,659,587,659,698,784,880,987,1046,1174],t=0,o=135,a=()=>{if(this.isMuted||!this.ctx||!this.musicGain)return;let l=this.ctx.currentTime,i=e[t%e.length],r=s[t%s.length];if(i>0){let c=this.ctx.createOscillator(),h=this.ctx.createGain();c.type="sawtooth",c.frequency.setValueAtTime(i,l),h.gain.setValueAtTime(.15,l),h.gain.exponentialRampToValueAtTime(.01,l+.11),c.connect(h),h.connect(this.musicGain),c.start(l),c.stop(l+.12)}if(r>0&&Math.random()>.2){let c=this.ctx.createOscillator(),h=this.ctx.createGain();c.type="square",c.frequency.setValueAtTime(r,l),h.gain.setValueAtTime(.14,l),h.gain.exponentialRampToValueAtTime(.01,l+.1),c.connect(h),h.connect(this.musicGain),c.start(l),c.stop(l+.11)}t++};this.bgmInterval=window.setInterval(a,o),a()}},n=new H;var S={tackle:{id:"tackle",name:"Tackle",type:"normal",power:40,accuracy:100,pp:35,maxPp:35,category:"physical",description:"A physical charge attack."},scratch:{id:"scratch",name:"Scratch",type:"normal",power:40,accuracy:100,pp:35,maxPp:35,category:"physical",description:"Scratches with sharp claws."},ember:{id:"ember",name:"Ember",type:"fire",power:40,accuracy:100,pp:25,maxPp:25,category:"special",description:"An attack that inflicts small flames."},flamethrower:{id:"flamethrower",name:"Flamethrower",type:"fire",power:90,accuracy:100,pp:15,maxPp:15,category:"special",description:"A powerful stream of intense fire."},water_gun:{id:"water_gun",name:"Water Gun",type:"water",power:40,accuracy:100,pp:25,maxPp:25,category:"special",description:"Squirts water to attack the foe."},hydro_pump:{id:"hydro_pump",name:"Hydro Pump",type:"water",power:110,accuracy:80,pp:5,maxPp:5,category:"special",description:"Blasts high-pressure water at the foe."},vine_whip:{id:"vine_whip",name:"Vine Whip",type:"grass",power:45,accuracy:100,pp:25,maxPp:25,category:"physical",description:"Strikes the foe with slender vines."},razor_leaf:{id:"razor_leaf",name:"Razor Leaf",type:"grass",power:55,accuracy:95,pp:25,maxPp:25,category:"physical",description:"Cuts the enemy with sharp leaves."},thundershock:{id:"thundershock",name:"Thundershock",type:"electric",power:40,accuracy:100,pp:30,maxPp:30,category:"special",description:"An electric jolt that shocks the foe."},thunderbolt:{id:"thunderbolt",name:"Thunderbolt",type:"electric",power:90,accuracy:100,pp:15,maxPp:15,category:"special",description:"A strong electrical blast."},gust:{id:"gust",name:"Gust",type:"flying",power:40,accuracy:100,pp:35,maxPp:35,category:"special",description:"Strikes the target with wind."},quick_attack:{id:"quick_attack",name:"Quick Attack",type:"normal",power:40,accuracy:100,pp:30,maxPp:30,category:"physical",description:"An extremely fast physical lunge."},bug_bite:{id:"bug_bite",name:"Bug Bite",type:"bug",power:60,accuracy:100,pp:20,maxPp:20,category:"physical",description:"The user bites the target."},poison_sting:{id:"poison_sting",name:"Poison Sting",type:"poison",power:30,accuracy:100,pp:35,maxPp:35,category:"physical",description:"A toxic barb attack."},rock_throw:{id:"rock_throw",name:"Rock Throw",type:"rock",power:50,accuracy:90,pp:15,maxPp:15,category:"physical",description:"Hurls small boulders at the foe."},rock_tomb:{id:"rock_tomb",name:"Rock Tomb",type:"rock",power:60,accuracy:95,pp:15,maxPp:15,category:"physical",description:"Stops the foe from moving with rocks and lowers speed.",statChange:{stat:"speed",stages:-1}},bind:{id:"bind",name:"Bind",type:"normal",power:25,accuracy:85,pp:20,maxPp:20,category:"physical",description:"Binds and squeezes the target."},karate_chop:{id:"karate_chop",name:"Karate Chop",type:"fighting",power:50,accuracy:100,pp:25,maxPp:25,category:"physical",description:"A sharp and powerful chop."},low_kick:{id:"low_kick",name:"Low Kick",type:"fighting",power:50,accuracy:100,pp:20,maxPp:20,category:"physical",description:"A low tripping kick."},bite:{id:"bite",name:"Bite",type:"normal",power:60,accuracy:100,pp:25,maxPp:25,category:"physical",description:"Bites with vicious fangs."},confusion:{id:"confusion",name:"Confusion",type:"psychic",power:50,accuracy:100,pp:25,maxPp:25,category:"special",description:"A telekinetic psychic attack."},shadow_ball:{id:"shadow_ball",name:"Shadow Ball",type:"ghost",power:80,accuracy:100,pp:15,maxPp:15,category:"special",description:"Hurls a shadowy blob at the target."},mud_slap:{id:"mud_slap",name:"Mud-Slap",type:"ground",power:30,accuracy:100,pp:25,maxPp:25,category:"special",description:"Hurls mud in the face of the foe."},growl:{id:"growl",name:"Growl",type:"normal",power:0,accuracy:100,pp:40,maxPp:40,category:"status",description:"Lowers the foe's attack stat.",statChange:{stat:"attack",stages:-1}},tail_whip:{id:"tail_whip",name:"Tail Whip",type:"normal",power:0,accuracy:100,pp:30,maxPp:30,category:"status",description:"Wags tail cutely to lower foe's defense.",statChange:{stat:"defense",stages:-1}},harden:{id:"harden",name:"Harden",type:"normal",power:0,accuracy:100,pp:30,maxPp:30,category:"status",description:"Stiffens muscles to boost user's defense.",statChange:{stat:"defense",stages:1}}};var f="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/",d="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/",w=[{id:1,name:"Bulbasaur",category:"Seed Pok\xE9mon",height:"0.7 m",weight:"6.9 kg",entryLore:"A strange seed was planted on its back at birth. The plant sprouts and grows with this Pok\xE9mon.",types:["grass","poison"],baseStats:{hp:45,attack:49,defense:49,speed:45,special:65},learnableMoves:[{level:1,moveId:"tackle"},{level:3,moveId:"growl"},{level:7,moveId:"vine_whip"},{level:13,moveId:"razor_leaf"}],catchRate:45,baseExp:64,spriteFront:`${f}1.png`,spriteBack:`${d}1.png`,color:"#78c850",evolution:{level:16,evolvesToId:2}},{id:2,name:"Ivysaur",category:"Seed Pok\xE9mon",height:"1.0 m",weight:"13.0 kg",entryLore:"When the bud on its back starts swelling, a sweet aroma wafts to indicate its forthcoming bloom.",types:["grass","poison"],baseStats:{hp:60,attack:62,defense:63,speed:60,special:80},learnableMoves:[{level:1,moveId:"tackle"},{level:7,moveId:"vine_whip"},{level:13,moveId:"razor_leaf"},{level:20,moveId:"poison_sting"}],catchRate:45,baseExp:142,spriteFront:`${f}2.png`,spriteBack:`${d}2.png`,color:"#65ad40"},{id:4,name:"Charmander",category:"Lizard Pok\xE9mon",height:"0.6 m",weight:"8.5 kg",entryLore:"The flame on its tail indicates Charmander\u2019s life force. If it is healthy, the flame burns brightly.",types:["fire"],baseStats:{hp:39,attack:52,defense:43,speed:65,special:60},learnableMoves:[{level:1,moveId:"scratch"},{level:3,moveId:"growl"},{level:7,moveId:"ember"},{level:15,moveId:"flamethrower"}],catchRate:45,baseExp:62,spriteFront:`${f}4.png`,spriteBack:`${d}4.png`,color:"#f08030",evolution:{level:16,evolvesToId:5}},{id:5,name:"Charmeleon",category:"Flame Pok\xE9mon",height:"1.1 m",weight:"19.0 kg",entryLore:"When it swings its burning tail, it elevates the temperature around it to unbearably high levels.",types:["fire"],baseStats:{hp:58,attack:64,defense:58,speed:80,special:80},learnableMoves:[{level:1,moveId:"scratch"},{level:7,moveId:"ember"},{level:15,moveId:"flamethrower"},{level:22,moveId:"bite"}],catchRate:45,baseExp:142,spriteFront:`${f}5.png`,spriteBack:`${d}5.png`,color:"#d65f1a"},{id:7,name:"Squirtle",category:"Tiny Turtle Pok\xE9mon",height:"0.5 m",weight:"9.0 kg",entryLore:"After birth, its back swells and hardens into a sturdy shell. It powerfully sprays foam from its mouth.",types:["water"],baseStats:{hp:44,attack:48,defense:65,speed:43,special:50},learnableMoves:[{level:1,moveId:"tackle"},{level:3,moveId:"tail_whip"},{level:7,moveId:"water_gun"},{level:15,moveId:"hydro_pump"}],catchRate:45,baseExp:63,spriteFront:`${f}7.png`,spriteBack:`${d}7.png`,color:"#6890f0",evolution:{level:16,evolvesToId:8}},{id:8,name:"Wartortle",category:"Turtle Pok\xE9mon",height:"1.0 m",weight:"22.5 kg",entryLore:"It cleverly controls its furry ears and tail to maintain balance while swimming at high speeds.",types:["water"],baseStats:{hp:59,attack:63,defense:80,speed:58,special:65},learnableMoves:[{level:1,moveId:"tackle"},{level:7,moveId:"water_gun"},{level:15,moveId:"bite"},{level:20,moveId:"hydro_pump"}],catchRate:45,baseExp:142,spriteFront:`${f}8.png`,spriteBack:`${d}8.png`,color:"#557bcc"},{id:10,name:"Caterpie",category:"Worm Pok\xE9mon",height:"0.3 m",weight:"2.9 kg",entryLore:"For protection, it releases a horrible stench from the antennae on its head to drive away foes.",types:["bug"],baseStats:{hp:45,attack:30,defense:35,speed:45,special:20},learnableMoves:[{level:1,moveId:"tackle"},{level:5,moveId:"bug_bite"}],catchRate:255,baseExp:39,spriteFront:`${f}10.png`,spriteBack:`${d}10.png`,color:"#a8b820",evolution:{level:7,evolvesToId:11}},{id:11,name:"Metapod",category:"Cocoon Pok\xE9mon",height:"0.7 m",weight:"9.9 kg",entryLore:"A steel-hard shell protects its tender body. It quietly endures while preparing for evolution.",types:["bug"],baseStats:{hp:50,attack:25,defense:55,speed:30,special:25},learnableMoves:[{level:1,moveId:"harden"},{level:7,moveId:"tackle"}],catchRate:120,baseExp:72,spriteFront:`${f}11.png`,spriteBack:`${d}11.png`,color:"#a0c020",evolution:{level:10,evolvesToId:12}},{id:12,name:"Butterfree",category:"Butterfly Pok\xE9mon",height:"1.1 m",weight:"32.0 kg",entryLore:"In battle, it flaps its wings at great speed to release highly toxic dust into the air.",types:["bug","flying"],baseStats:{hp:60,attack:45,defense:50,speed:70,special:90},learnableMoves:[{level:1,moveId:"gust"},{level:10,moveId:"confusion"},{level:14,moveId:"poison_sting"}],catchRate:45,baseExp:178,spriteFront:`${f}12.png`,spriteBack:`${d}12.png`,color:"#9078c8"},{id:16,name:"Pidgey",category:"Tiny Bird Pok\xE9mon",height:"0.3 m",weight:"1.8 kg",entryLore:"A common sight in forests and woods. It flaps its wings at ground level to kick up blinding sand.",types:["normal","flying"],baseStats:{hp:40,attack:45,defense:40,speed:56,special:35},learnableMoves:[{level:1,moveId:"tackle"},{level:5,moveId:"gust"},{level:9,moveId:"quick_attack"}],catchRate:255,baseExp:50,spriteFront:`${f}16.png`,spriteBack:`${d}16.png`,color:"#a890f0",evolution:{level:18,evolvesToId:17}},{id:17,name:"Pidgeotto",category:"Bird Pok\xE9mon",height:"1.1 m",weight:"30.0 kg",entryLore:"Very protective of its sprawling territorial area, this Pok\xE9mon will fiercely peck at any intruder.",types:["normal","flying"],baseStats:{hp:63,attack:60,defense:55,speed:71,special:50},learnableMoves:[{level:1,moveId:"tackle"},{level:5,moveId:"gust"},{level:12,moveId:"quick_attack"}],catchRate:120,baseExp:122,spriteFront:`${f}17.png`,spriteBack:`${d}17.png`,color:"#9880d8"},{id:19,name:"Rattata",category:"Mouse Pok\xE9mon",height:"0.3 m",weight:"3.5 kg",entryLore:"Bites anything when it attacks. Small and very quick, it is a common sight in many places.",types:["normal"],baseStats:{hp:30,attack:56,defense:35,speed:72,special:25},learnableMoves:[{level:1,moveId:"tackle"},{level:4,moveId:"quick_attack"},{level:7,moveId:"tail_whip"},{level:10,moveId:"bite"}],catchRate:255,baseExp:51,spriteFront:`${f}19.png`,spriteBack:`${d}19.png`,color:"#a8a878"},{id:25,name:"Pikachu",category:"Mouse Pok\xE9mon",height:"0.4 m",weight:"6.0 kg",entryLore:"When several of these Pok\xE9mon gather, their electricity could build and cause lightning storms.",types:["electric"],baseStats:{hp:35,attack:55,defense:40,speed:90,special:50},learnableMoves:[{level:1,moveId:"thundershock"},{level:4,moveId:"tail_whip"},{level:8,moveId:"quick_attack"},{level:16,moveId:"thunderbolt"}],catchRate:190,baseExp:112,spriteFront:`${f}25.png`,spriteBack:`${d}25.png`,color:"#f8d030"},{id:41,name:"Zubat",category:"Bat Pok\xE9mon",height:"0.8 m",weight:"7.5 kg",entryLore:"Forms colonies in dark places. It emits ultrasonic cries to check its surroundings and guide flight.",types:["poison","flying"],baseStats:{hp:40,attack:45,defense:35,speed:55,special:40},learnableMoves:[{level:1,moveId:"bite"},{level:5,moveId:"gust"},{level:10,moveId:"poison_sting"}],catchRate:255,baseExp:49,spriteFront:`${f}41.png`,spriteBack:`${d}41.png`,color:"#705898"},{id:43,name:"Oddish",category:"Weed Pok\xE9mon",height:"0.5 m",weight:"5.4 kg",entryLore:"During the day, it keeps its face buried in the ground. At night, it wanders around sowing its seeds.",types:["grass","poison"],baseStats:{hp:45,attack:50,defense:55,speed:30,special:75},learnableMoves:[{level:1,moveId:"poison_sting"},{level:5,moveId:"vine_whip"},{level:12,moveId:"razor_leaf"}],catchRate:255,baseExp:64,spriteFront:`${f}43.png`,spriteBack:`${d}43.png`,color:"#78c850"},{id:56,name:"Mankey",category:"Pig Monkey Pok\xE9mon",height:"0.5 m",weight:"28.0 kg",entryLore:"Extremely quick to anger. It could be docile one moment then thrashing away the next instant.",types:["fighting"],baseStats:{hp:40,attack:80,defense:35,speed:70,special:35},learnableMoves:[{level:1,moveId:"scratch"},{level:4,moveId:"low_kick"},{level:9,moveId:"karate_chop"}],catchRate:190,baseExp:61,spriteFront:`${f}56.png`,spriteBack:`${d}56.png`,color:"#c03028"},{id:66,name:"Machop",category:"Superpower Pok\xE9mon",height:"0.8 m",weight:"19.5 kg",entryLore:"Loves to build its muscles. It trains in all styles of martial arts to become even stronger.",types:["fighting"],baseStats:{hp:70,attack:80,defense:50,speed:35,special:35},learnableMoves:[{level:1,moveId:"low_kick"},{level:7,moveId:"karate_chop"},{level:12,moveId:"tackle"}],catchRate:180,baseExp:61,spriteFront:`${f}66.png`,spriteBack:`${d}66.png`,color:"#a03020"},{id:74,name:"Geodude",category:"Rock Pok\xE9mon",height:"0.4 m",weight:"20.0 kg",entryLore:"Found in fields and mountains. Mistaking them for boulders, people often step or trip on them.",types:["rock","ground"],baseStats:{hp:40,attack:80,defense:100,speed:20,special:30},learnableMoves:[{level:1,moveId:"tackle"},{level:3,moveId:"harden"},{level:8,moveId:"rock_throw"},{level:12,moveId:"mud_slap"}],catchRate:255,baseExp:60,spriteFront:`${f}74.png`,spriteBack:`${d}74.png`,color:"#b8a038",evolution:{level:25,evolvesToId:75}},{id:75,name:"Graveler",category:"Rock Pok\xE9mon",height:"1.0 m",weight:"105.0 kg",entryLore:"Rolls down slopes to move. It rolls over any obstacle without slowing or changing its direction.",types:["rock","ground"],baseStats:{hp:55,attack:95,defense:115,speed:35,special:45},learnableMoves:[{level:1,moveId:"tackle"},{level:8,moveId:"rock_throw"},{level:16,moveId:"rock_tomb"}],catchRate:120,baseExp:137,spriteFront:`${f}75.png`,spriteBack:`${d}75.png`,color:"#988028"},{id:92,name:"Gastly",category:"Gas Pok\xE9mon",height:"1.3 m",weight:"0.1 kg",entryLore:"Almost invisible, this gaseous Pok\xE9mon cloaks the target and puts it to sleep without warning.",types:["ghost","poison"],baseStats:{hp:30,attack:35,defense:30,speed:80,special:100},learnableMoves:[{level:1,moveId:"poison_sting"},{level:8,moveId:"confusion"},{level:15,moveId:"shadow_ball"}],catchRate:190,baseExp:62,spriteFront:`${f}92.png`,spriteBack:`${d}92.png`,color:"#705898"},{id:95,name:"Onix",category:"Rock Snake Pok\xE9mon",height:"8.8 m",weight:"210.0 kg",entryLore:"As it grows, the stone portions of its body harden to become similar to a diamond, though colored black.",types:["rock","ground"],baseStats:{hp:55,attack:65,defense:160,speed:70,special:30},learnableMoves:[{level:1,moveId:"tackle"},{level:5,moveId:"bind"},{level:9,moveId:"rock_throw"},{level:14,moveId:"rock_tomb"}],catchRate:45,baseExp:77,spriteFront:`${f}95.png`,spriteBack:`${d}95.png`,color:"#a89040"},{id:133,name:"Eevee",category:"Evolution Pok\xE9mon",height:"0.3 m",weight:"6.5 kg",entryLore:"Its genetic code is irregular. It may mutate if it is exposed to radiation from element stones.",types:["normal"],baseStats:{hp:55,attack:55,defense:50,speed:55,special:65},learnableMoves:[{level:1,moveId:"tackle"},{level:4,moveId:"tail_whip"},{level:8,moveId:"quick_attack"},{level:16,moveId:"bite"}],catchRate:45,baseExp:65,spriteFront:`${f}133.png`,spriteBack:`${d}133.png`,color:"#b08050"},{id:143,name:"Snorlax",category:"Sleeping Pok\xE9mon",height:"2.1 m",weight:"460.0 kg",entryLore:"Very lazy. Just eats and sleeps. As its enormous bulk builds, it becomes increasingly reluctant to move.",types:["normal"],baseStats:{hp:160,attack:110,defense:65,speed:30,special:65},learnableMoves:[{level:1,moveId:"tackle"},{level:8,moveId:"bite"},{level:15,moveId:"harden"}],catchRate:25,baseExp:189,spriteFront:`${f}143.png`,spriteBack:`${d}143.png`,color:"#006666"}],T=new Map(w.map(m=>[m.id,m])),x=[{id:16,minLvl:2,maxLvl:5,weight:35},{id:19,minLvl:2,maxLvl:4,weight:25},{id:10,minLvl:3,maxLvl:5,weight:15},{id:56,minLvl:4,maxLvl:6,weight:10},{id:41,minLvl:3,maxLvl:5,weight:8},{id:25,minLvl:4,maxLvl:6,weight:5},{id:74,minLvl:4,maxLvl:7,weight:2}];function K(m,e){return Math.floor((2*m+31)*e/100)+e+10}function R(m,e){return Math.floor((2*m+31)*e/100)+5}function V(m){return Math.floor(Math.pow(m,3)*.8)+15}function I(m,e){let s=T.get(m);if(!s)throw new Error(`Unknown pokemon species id: ${m}`);let t=K(s.baseStats.hp,e),o={attack:R(s.baseStats.attack,e),defense:R(s.baseStats.defense,e),speed:R(s.baseStats.speed,e),special:R(s.baseStats.special,e)},l=s.learnableMoves.filter(i=>i.level<=e).map(i=>i.moveId).slice(-4).map(i=>{let r=S[i]||S.tackle;return{move:r,currentPp:r.pp}});return l.length===0&&l.push({move:S.tackle,currentPp:S.tackle.pp}),{species:s,level:e,currentHp:t,maxHp:t,stats:o,moves:l,currentExp:0,nextLevelExp:V(e)}}var X={normal:{rock:.5,ghost:0},fire:{grass:2,bug:2,water:.5,fire:.5,rock:.5},water:{fire:2,ground:2,rock:2,water:.5,grass:.5},grass:{water:2,ground:2,rock:2,fire:.5,grass:.5,flying:.5,bug:.5,poison:.5},electric:{water:2,flying:2,electric:.5,grass:.5,ground:0},flying:{grass:2,bug:2,fighting:2,electric:.5,rock:.5},bug:{grass:2,psychic:2,fire:.5,flying:.5,fighting:.5,ghost:.5},poison:{grass:2,poison:.5,ground:.5,rock:.5,ghost:.5},rock:{fire:2,flying:2,bug:2,fighting:.5,ground:.5},ground:{fire:2,electric:2,poison:2,rock:2,grass:.5,bug:.5,flying:0},fighting:{normal:2,rock:2,flying:.5,poison:.5,psychic:.5,bug:.5,ghost:0},psychic:{fighting:2,poison:2,psychic:.5},ghost:{psychic:2,ghost:2,normal:0}};function N(m,e){let s=1;for(let t of e){let o=X[m];o&&o[t]!==void 0&&(s*=o[t])}return s}var b=class{static imageCache=new Map;static loadingPromises=new Map;static getImage(e){return this.imageCache.has(e)?this.imageCache.get(e):(this.loadImage(e),null)}static loadImage(e){if(this.imageCache.has(e))return Promise.resolve(this.imageCache.get(e));if(this.loadingPromises.has(e))return this.loadingPromises.get(e);let s=new Promise(t=>{let o=new Image;o.crossOrigin="anonymous",o.onload=()=>{this.imageCache.set(e,o),this.loadingPromises.delete(e),t(o)},o.onerror=()=>{let a=this.createFallbackImage(e);this.imageCache.set(e,a),this.loadingPromises.delete(e),t(a)},o.src=e});return this.loadingPromises.set(e,s),s}static createFallbackImage(e){let s=document.createElement("canvas");s.width=64,s.height=64;let t=s.getContext("2d");t.imageSmoothingEnabled=!1,t.fillStyle="#333",t.beginPath(),t.ellipse(32,40,20,16,0,0,Math.PI*2),t.fill(),t.fillStyle=e.includes("4")?"#f08030":e.includes("7")?"#6890f0":"#78c850",t.beginPath(),t.ellipse(32,38,18,15,0,0,Math.PI*2),t.fill(),t.beginPath(),t.arc(32,22,14,0,Math.PI*2),t.fill(),t.fillStyle="#fff",t.fillRect(26,18,4,6),t.fillRect(34,18,4,6),t.fillStyle="#000",t.fillRect(28,20,2,4),t.fillRect(36,20,2,4);let o=new Image;return o.src=s.toDataURL(),o}};var A=class{state="INTRO";playerPokemon;enemyPokemon;playerData;isTrainer=!1;trainerName="";npcId="";enemyParty=[];currentEnemyIndex=0;rewardMoney=0;badgeReward;menuCursor=0;moveCursor=0;bagCursor=0;pokemonCursor=0;introTimer=0;introDuration=1800;playerAction=null;enemyAction=null;currentMessage="";messageCallback=null;targetPlayerHp=0;targetEnemyHp=0;hpAnimCallback=null;screenShake=0;flashAlpha=0;catchWobbleCount=0;catchTimer=0;isCatchSuccess=!1;ballX=0;ballY=0;currentBallMultiplier=1;onBattleEnd;constructor(e,s,t,o){this.playerData=e,this.playerPokemon=e.party[0],this.onBattleEnd=o,t&&t.isTrainer?(this.isTrainer=!0,this.trainerName=t.trainerName||"Trainer",this.npcId=t.npcId||"",this.enemyParty=t.enemyParty&&t.enemyParty.length>0?t.enemyParty:[s],this.currentEnemyIndex=0,this.enemyPokemon=this.enemyParty[0],this.rewardMoney=t.rewardMoney||300,this.badgeReward=t.badge):(this.isTrainer=!1,this.enemyParty=[s],this.enemyPokemon=s),this.targetPlayerHp=this.playerPokemon.currentHp,this.targetEnemyHp=this.enemyPokemon.currentHp,n.playBattleBgm(),b.loadImage(this.playerPokemon.species.spriteBack),b.loadImage(this.enemyPokemon.species.spriteFront),this.isTrainer?this.setMessage(`${this.trainerName.toUpperCase()} wants to battle!`,()=>{this.setMessage(`${this.trainerName.toUpperCase()} sent out ${this.enemyPokemon.species.name.toUpperCase()}!`,()=>{this.setMessage(`Go! ${this.playerPokemon.species.name.toUpperCase()}!`,()=>{this.state="MAIN_MENU"})})}):this.setMessage(`Wild ${this.enemyPokemon.species.name.toUpperCase()} appeared!`,()=>{this.setMessage(`Go! ${this.playerPokemon.species.name.toUpperCase()}!`,()=>{this.state="MAIN_MENU"})})}update(e,s){switch(this.screenShake>0&&(this.screenShake=Math.max(0,this.screenShake-s*.05)),this.flashAlpha>0&&(this.flashAlpha=Math.max(0,this.flashAlpha-s*.003)),this.state){case"INTRO":this.introTimer+=s,this.introTimer>=this.introDuration&&(this.state="MESSAGE");break;case"MESSAGE":if(e.isJustPressed("a")||e.isJustPressed("b")){n.playSelect();let t=this.messageCallback;this.messageCallback=null,t?t():this.state="MAIN_MENU"}break;case"MAIN_MENU":this.updateMainMenu(e);break;case"MOVE_SELECT":this.updateMoveSelect(e);break;case"BAG_MENU":this.updateBagMenu(e);break;case"POKEMON_MENU":this.updatePokemonMenu(e);break;case"ANIMATING_HP":this.updateHpAnimation(s);break;case"ANIMATING_CATCH":this.updateCatchAnimation(s);break}}setMessage(e,s){this.currentMessage=e,this.messageCallback=s||null,this.state="MESSAGE"}updateMainMenu(e){(e.isJustPressed("up")||e.isJustPressed("down"))&&(this.menuCursor=this.menuCursor^2,n.playSelect()),(e.isJustPressed("left")||e.isJustPressed("right"))&&(this.menuCursor=this.menuCursor^1,n.playSelect()),e.isJustPressed("a")&&(n.playConfirm(),this.menuCursor===0?(this.moveCursor=0,this.state="MOVE_SELECT"):this.menuCursor===1?(this.bagCursor=0,this.state="BAG_MENU"):this.menuCursor===2?(this.pokemonCursor=0,this.state="POKEMON_MENU"):this.menuCursor===3&&this.attemptRun())}updateMoveSelect(e){let s=this.playerPokemon.moves.length;if(e.isJustPressed("up")&&this.moveCursor>=2?(this.moveCursor-=2,n.playSelect()):e.isJustPressed("down")&&this.moveCursor+2<s?(this.moveCursor+=2,n.playSelect()):e.isJustPressed("left")&&this.moveCursor%2===1?(this.moveCursor-=1,n.playSelect()):e.isJustPressed("right")&&this.moveCursor%2===0&&this.moveCursor+1<s&&(this.moveCursor+=1,n.playSelect()),e.isJustPressed("b")){n.playCancel(),this.state="MAIN_MENU";return}if(e.isJustPressed("a")){let t=this.playerPokemon.moves[this.moveCursor];if(t.currentPp<=0){n.playBump(),this.setMessage("No PP left for this move!",()=>{this.state="MOVE_SELECT"});return}n.playConfirm(),this.playerAction={type:"move",move:t.move},this.prepareTurn()}}updateBagMenu(e){let s=this.playerData.inventory;if(e.isJustPressed("up")&&this.bagCursor>0&&(this.bagCursor--,n.playSelect()),e.isJustPressed("down")&&this.bagCursor<s.length-1&&(this.bagCursor++,n.playSelect()),e.isJustPressed("b")){n.playCancel(),this.state="MAIN_MENU";return}if(e.isJustPressed("a")){let t=s[this.bagCursor];if(!t||t.count<=0){n.playBump();return}if(t.type==="pokeball"){if(this.isTrainer){n.playBump(),this.setMessage("The Trainer blocked the Ball! Don't be a thief!",()=>{this.state="MAIN_MENU"});return}n.playConfirm(),t.count--,this.currentBallMultiplier=t.id==="greatball"?1.5:1,this.startCatchAttempt()}else if(t.type==="potion"){if(this.playerPokemon.currentHp>=this.playerPokemon.maxHp){n.playBump(),this.setMessage("It won't have any effect!",()=>{this.state="BAG_MENU"});return}n.playConfirm(),t.count--;let o=t.id==="super_potion"?50:20,a=Math.min(o,this.playerPokemon.maxHp-this.playerPokemon.currentHp);this.targetPlayerHp=this.playerPokemon.currentHp+a,n.playHealChime(),this.setMessage(`Used ${t.name}! ${this.playerPokemon.species.name} recovered ${a} HP!`,()=>{this.animateHp(()=>{this.executeEnemyAction()})})}else if(t.type==="revive"){let o=this.playerData.party.find(a=>a.currentHp<=0);if(!o){n.playBump(),this.setMessage("No Pok\xE9mon in your party is fainted!",()=>{this.state="BAG_MENU"});return}n.playConfirm(),t.count--,o.currentHp=Math.floor(o.maxHp/2),n.playHealChime(),this.setMessage(`Used REVIVE! ${o.species.name} was revitalized!`,()=>{this.executeEnemyAction()})}}}updatePokemonMenu(e){let s=this.playerData.party;if(e.isJustPressed("up")&&this.pokemonCursor>0&&(this.pokemonCursor--,n.playSelect()),e.isJustPressed("down")&&this.pokemonCursor<s.length-1&&(this.pokemonCursor++,n.playSelect()),e.isJustPressed("b")){n.playCancel(),this.state="MAIN_MENU";return}if(e.isJustPressed("a")){let t=s[this.pokemonCursor];if(t===this.playerPokemon){this.setMessage(`${t.species.name} is already in battle!`,()=>{this.state="POKEMON_MENU"});return}if(t.currentHp<=0){n.playBump(),this.setMessage(`${t.species.name} has no energy left to battle!`,()=>{this.state="POKEMON_MENU"});return}n.playConfirm(),this.playerPokemon=t,this.targetPlayerHp=t.currentHp,b.loadImage(t.species.spriteBack),this.setMessage(`Go! ${t.species.name}!`,()=>{this.executeEnemyAction()})}}attemptRun(){if(this.isTrainer){n.playBump(),this.setMessage("No! There's no running from a Trainer battle!",()=>{this.state="MAIN_MENU"});return}let e=this.playerPokemon.stats.speed,s=this.enemyPokemon.stats.speed;e>=s||Math.random()<.75?(n.playSelect(),this.setMessage("Got away safely!",()=>{this.onBattleEnd("run")})):this.setMessage("Can't escape!",()=>{this.executeEnemyAction()})}startCatchAttempt(){this.state="ANIMATING_CATCH",this.catchTimer=0,this.catchWobbleCount=0,this.ballX=70,this.ballY=160,n.playBallThrow();let e=(3*this.enemyPokemon.maxHp-2*this.enemyPokemon.currentHp)/(3*this.enemyPokemon.maxHp),s=this.enemyPokemon.species.catchRate/255*e*1.25*this.currentBallMultiplier;this.isCatchSuccess=Math.random()<Math.max(.25,s)}updateCatchAnimation(e){if(this.catchTimer+=e,this.catchTimer<600){let s=this.catchTimer/600;this.ballX=70+160*s,this.ballY=160+-95*s-Math.sin(s*Math.PI)*50;return}this.catchTimer>=600&&this.catchTimer<1200&&this.catchWobbleCount===0?(this.catchWobbleCount=1,n.playBallWobble()):this.catchTimer>=1200&&this.catchTimer<1800&&this.catchWobbleCount===1?(this.catchWobbleCount=2,n.playBallWobble()):this.catchTimer>=1800&&this.catchTimer<2400&&this.catchWobbleCount===2?(this.catchWobbleCount=3,n.playBallWobble()):this.catchTimer>=2400&&(this.isCatchSuccess?(n.playCatchSuccess(),this.playerData.caughtPokemon.includes(this.enemyPokemon.species.id)||this.playerData.caughtPokemon.push(this.enemyPokemon.species.id),this.setMessage(`All right! ${this.enemyPokemon.species.name.toUpperCase()} was caught!`,()=>{this.playerData.party.length<6?(this.playerData.party.push(this.enemyPokemon),this.setMessage(`${this.enemyPokemon.species.name} was added to your party!`,()=>{this.onBattleEnd("catch")})):this.setMessage(`${this.enemyPokemon.species.name} was sent to the Pok\xE9mon Storage!`,()=>{this.onBattleEnd("catch")})})):(n.playBump(),this.setMessage("Oh no! The Pok\xE9mon broke free!",()=>{this.executeEnemyAction()})))}prepareTurn(){let e=this.enemyPokemon.moves.filter(a=>a.currentPp>0),s=e.length>0?e[Math.floor(Math.random()*e.length)].move:this.enemyPokemon.moves[0].move;this.enemyAction={type:"move",move:s};let t=this.playerPokemon.stats.speed,o=this.enemyPokemon.stats.speed;t>=o?this.executePlayerAction(()=>{this.enemyPokemon.currentHp>0&&this.executeEnemyAction()}):this.executeEnemyAction(()=>{this.playerPokemon.currentHp>0&&this.executePlayerAction()})}executePlayerAction(e){if(!this.playerAction||!this.playerAction.move)return;let s=this.playerAction.move,t=this.playerPokemon.moves.find(o=>o.move.id===s.id);t&&t.currentPp--,this.setMessage(`${this.playerPokemon.species.name.toUpperCase()} used ${s.name.toUpperCase()}!`,()=>{this.applyMoveEffect(s,this.playerPokemon,this.enemyPokemon,!1,e)})}executeEnemyAction(e){if(!this.enemyAction||!this.enemyAction.move)return;let s=this.enemyAction.move,t=this.enemyPokemon.moves.find(a=>a.move.id===s.id);t&&t.currentPp--;let o=this.isTrainer?`${this.enemyPokemon.species.name.toUpperCase()}`:`Wild ${this.enemyPokemon.species.name.toUpperCase()}`;this.setMessage(`${o} used ${s.name.toUpperCase()}!`,()=>{this.applyMoveEffect(s,this.enemyPokemon,this.playerPokemon,!0,e)})}applyMoveEffect(e,s,t,o,a){if(Math.random()*100>e.accuracy){this.setMessage(`${s.species.name}'s attack missed!`,()=>{a?a():this.state="MAIN_MENU"});return}if(this.screenShake=10,this.flashAlpha=.6,e.type==="fire"?n.playSpecial("fire"):e.type==="water"?n.playSpecial("water"):e.type==="electric"?n.playSpecial("electric"):e.type==="grass"?n.playSpecial("grass"):n.playHit(),e.category==="status"){e.statChange&&this.setMessage(`${t.species.name}'s ${e.statChange.stat.toUpperCase()} fell!`,()=>{a?a():this.state="MAIN_MENU"});return}let l=N(e.type,t.species.types),i=e.category==="physical"?s.stats.attack:s.stats.special,r=e.category==="physical"?t.stats.defense:t.stats.special,c=Math.floor(((2*s.level/5+2)*e.power*(i/Math.max(1,r))/50+2)*(.85+Math.random()*.15)),h=Math.max(1,Math.floor(c*l));o?this.targetPlayerHp=Math.max(0,this.playerPokemon.currentHp-h):this.targetEnemyHp=Math.max(0,this.enemyPokemon.currentHp-h),this.animateHp(()=>{l>1?this.setMessage("It's super effective!",()=>{this.checkFaint(t,o,a)}):l<1&&l>0?this.setMessage("It's not very effective...",()=>{this.checkFaint(t,o,a)}):this.checkFaint(t,o,a)})}animateHp(e){this.state="ANIMATING_HP",this.hpAnimCallback=e}updateHpAnimation(e){let s=Math.max(.04,e*.05),t=!1,o=!1;if(this.playerPokemon.currentHp>this.targetPlayerHp?this.playerPokemon.currentHp=Math.max(this.targetPlayerHp,this.playerPokemon.currentHp-s):this.playerPokemon.currentHp<this.targetPlayerHp?this.playerPokemon.currentHp=Math.min(this.targetPlayerHp,this.playerPokemon.currentHp+s):t=!0,this.enemyPokemon.currentHp>this.targetEnemyHp?this.enemyPokemon.currentHp=Math.max(this.targetEnemyHp,this.enemyPokemon.currentHp-s):this.enemyPokemon.currentHp<this.targetEnemyHp?this.enemyPokemon.currentHp=Math.min(this.targetEnemyHp,this.enemyPokemon.currentHp+s):o=!0,t&&o){let a=this.hpAnimCallback;this.hpAnimCallback=null,a?a():this.state="MAIN_MENU"}}checkFaint(e,s,t){if(e.currentHp<=0)if(n.playFaint(),s)this.setMessage(`${this.playerPokemon.species.name} fainted!`,()=>{let o=this.playerData.party.find(a=>a.currentHp>0);o?(this.playerPokemon=o,this.targetPlayerHp=o.currentHp,this.setMessage(`Go! ${o.species.name}!`,()=>{this.state="MAIN_MENU"})):this.setMessage("You are out of usable Pok\xE9mon! Blacked out...",()=>{this.playerData.party.forEach(a=>a.currentHp=a.maxHp),this.onBattleEnd("loss")})});else{let o=this.isTrainer?`Foe's ${this.enemyPokemon.species.name}`:`Wild ${this.enemyPokemon.species.name}`;this.setMessage(`${o} fainted!`,()=>{let a=Math.floor(this.enemyPokemon.species.baseExp*this.enemyPokemon.level/7)+14;this.playerPokemon.currentExp+=a,this.setMessage(`${this.playerPokemon.species.name} gained ${a} EXP. Points!`,()=>{let l=()=>{this.isTrainer&&this.currentEnemyIndex+1<this.enemyParty.length?(this.currentEnemyIndex++,this.enemyPokemon=this.enemyParty[this.currentEnemyIndex],this.targetEnemyHp=this.enemyPokemon.currentHp,b.loadImage(this.enemyPokemon.species.spriteFront),this.playerData.seenPokemon.includes(this.enemyPokemon.species.id)||this.playerData.seenPokemon.push(this.enemyPokemon.species.id),this.setMessage(`${this.trainerName} sent out ${this.enemyPokemon.species.name.toUpperCase()}!`,()=>{this.state="MAIN_MENU"})):this.isTrainer?(this.playerData.money+=this.rewardMoney,this.playerData.defeatedTrainers.includes(this.npcId)||this.playerData.defeatedTrainers.push(this.npcId),this.setMessage(`Defeated ${this.trainerName}!`,()=>{this.setMessage(`Player received $${this.rewardMoney} for winning!`,()=>{this.badgeReward?(this.playerData.hasBoulderBadge=!0,this.playerData.badges=Math.max(1,this.playerData.badges+1),n.playLevelUp(),this.setMessage(`Player received the ${this.badgeReward} from Brock!`,()=>{this.onBattleEnd("win")})):this.onBattleEnd("win")})})):this.onBattleEnd("win")};this.playerPokemon.currentExp>=this.playerPokemon.nextLevelExp?this.levelUpPokemon(l):l()})})}else t?t():this.state="MAIN_MENU"}levelUpPokemon(e){this.playerPokemon.level++,this.playerPokemon.currentExp=0,this.playerPokemon.nextLevelExp=Math.floor(Math.pow(this.playerPokemon.level,3)*.8)+15;let s=this.playerPokemon.maxHp;this.playerPokemon.maxHp=Math.floor((2*this.playerPokemon.species.baseStats.hp+31)*this.playerPokemon.level/100)+this.playerPokemon.level+10,this.playerPokemon.currentHp+=this.playerPokemon.maxHp-s,this.targetPlayerHp=this.playerPokemon.currentHp,this.playerPokemon.stats.attack=Math.floor((2*this.playerPokemon.species.baseStats.attack+31)*this.playerPokemon.level/100)+5,this.playerPokemon.stats.defense=Math.floor((2*this.playerPokemon.species.baseStats.defense+31)*this.playerPokemon.level/100)+5,this.playerPokemon.stats.speed=Math.floor((2*this.playerPokemon.species.baseStats.speed+31)*this.playerPokemon.level/100)+5,this.playerPokemon.stats.special=Math.floor((2*this.playerPokemon.species.baseStats.special+31)*this.playerPokemon.level/100)+5,n.playLevelUp(),this.setMessage(`${this.playerPokemon.species.name} grew to Level ${this.playerPokemon.level}!`,()=>{if(this.playerPokemon.species.evolution&&this.playerPokemon.level>=this.playerPokemon.species.evolution.level){let t=T.get(this.playerPokemon.species.evolution.evolvesToId);if(t){let o=this.playerPokemon.species.name;this.playerPokemon.species=t,this.playerData.seenPokemon.includes(t.id)||this.playerData.seenPokemon.push(t.id),this.playerData.caughtPokemon.includes(t.id)||this.playerData.caughtPokemon.push(t.id),n.playLevelUp(),this.setMessage(`What? ${o} is evolving!`,()=>{this.setMessage(`Congratulations! Your ${o} evolved into ${t.name}!`,()=>{e()})});return}}e()})}draw(e,s,t){if(e.save(),this.screenShake>0){let l=(Math.random()-.5)*this.screenShake,i=(Math.random()-.5)*this.screenShake;e.translate(l,i)}let o=e.createLinearGradient(0,0,0,t*.65);if(o.addColorStop(0,"#78c8e8"),o.addColorStop(1,"#d8f0f8"),e.fillStyle=o,e.fillRect(0,0,s,t*.65),e.fillStyle="#68b858",e.fillRect(0,t*.65,s,t*.35),e.fillStyle="#98d878",e.beginPath(),e.ellipse(230,85,60,20,0,0,Math.PI*2),e.fill(),e.strokeStyle="#58a048",e.lineWidth=2,e.stroke(),e.fillStyle="#98d878",e.beginPath(),e.ellipse(75,175,70,25,0,0,Math.PI*2),e.fill(),e.strokeStyle="#58a048",e.lineWidth=2,e.stroke(),this.state!=="ANIMATING_CATCH"||this.catchTimer<600){let l=b.getImage(this.enemyPokemon.species.spriteFront);l&&e.drawImage(l,185,30,90,90)}this.state==="ANIMATING_CATCH"&&this.drawPokeBall(e,this.ballX,this.ballY,this.catchWobbleCount);let a=b.getImage(this.playerPokemon.species.spriteBack);a&&e.drawImage(a,25,105,100,100),this.drawStatusBox(e,15,20,this.enemyPokemon,!1),this.drawStatusBox(e,s-150,125,this.playerPokemon,!0),this.flashAlpha>0&&(e.fillStyle=`rgba(255, 255, 255, ${this.flashAlpha})`,e.fillRect(0,0,s,t)),e.restore(),this.drawBottomWindow(e,s,t)}drawPokeBall(e,s,t,o){if(e.save(),e.translate(s,t),o>0){let a=Math.sin(Date.now()*.02)*.25;e.rotate(a)}e.fillStyle=this.currentBallMultiplier>1.2?"#2255cc":"#ee1515",e.beginPath(),e.arc(0,0,9,Math.PI,0),e.fill(),e.fillStyle="#ffffff",e.beginPath(),e.arc(0,0,9,0,Math.PI),e.fill(),e.fillStyle="#222222",e.fillRect(-9,-1.5,18,3),e.beginPath(),e.arc(0,0,3.5,0,Math.PI*2),e.fill(),e.fillStyle="#ffffff",e.beginPath(),e.arc(0,0,2,0,Math.PI*2),e.fill(),e.restore()}drawStatusBox(e,s,t,o,a){let i=a?45:36;e.fillStyle="#fff9e6",e.fillRect(s,t,135,i),e.strokeStyle="#222",e.lineWidth=2,e.strokeRect(s,t,135,i),e.fillStyle="#111",e.font="bold 11px monospace",e.fillText(o.species.name.toUpperCase(),s+8,t+14),e.font="bold 10px monospace",e.fillStyle="#b35900",e.fillText(`Lv${o.level}`,s+135-38,t+14);let r=s+35,c=t+20,h=85,p=6;e.fillStyle="#111",e.font="bold 9px monospace",e.fillText("HP",s+16,c+6),e.fillStyle="#555",e.fillRect(r,c,h,p);let y=Math.max(0,Math.min(1,o.currentHp/o.maxHp));if(e.fillStyle=y>.5?"#20c040":y>.2?"#f0b020":"#e03020",e.fillRect(r,c,Math.floor(h*y),p),a){e.fillStyle="#111",e.font="10px monospace";let g=`${Math.ceil(o.currentHp)}/${o.maxHp}`;e.fillText(g,s+135-46,t+38)}}drawBottomWindow(e,s,t){let a=t-70;if(e.fillStyle="#22384d",e.fillRect(0,a,s,70),e.fillStyle="#ffffff",e.fillRect(4,a+4,s-8,62),e.strokeStyle="#102030",e.lineWidth=2,e.strokeRect(4,a+4,s-8,62),this.state==="MESSAGE"||this.state==="INTRO"||this.state==="ANIMATING_CATCH"){if(e.fillStyle="#111111",e.font="bold 13px monospace",e.fillText(this.currentMessage,16,a+36),this.state==="MESSAGE"){let l=a+70-16+Math.floor(Date.now()/250)%2*2;e.fillStyle="#cc2222",e.beginPath(),e.moveTo(s-24,l),e.lineTo(s-16,l),e.lineTo(s-20,l+5),e.closePath(),e.fill()}return}if(this.state==="MAIN_MENU"){e.fillStyle="#111111",e.font="12px monospace",e.fillText("What will",16,a+28),e.fillText(`${this.playerPokemon.species.name.toUpperCase()} do?`,16,a+46);let l=s-145,i=135;e.fillStyle="#ffffff",e.fillRect(l,a+6,i,58),e.strokeRect(l,a+6,i,58);let r=["FIGHT","BAG","POK\xC9MON","RUN"],c=[{x:l+20,y:a+26},{x:l+80,y:a+26},{x:l+20,y:a+50},{x:l+80,y:a+50}];r.forEach((h,p)=>{e.fillStyle=this.menuCursor===p?"#c02020":"#111111",e.font="bold 11px monospace",e.fillText(h,c[p].x,c[p].y),this.menuCursor===p&&e.fillText("\u25B6",c[p].x-12,c[p].y)});return}if(this.state==="MOVE_SELECT"){let l=this.playerPokemon.moves,i=[{x:24,y:a+26},{x:120,y:a+26},{x:24,y:a+50},{x:120,y:a+50}];for(let c=0;c<4;c++)if(c<l.length){let h=l[c];e.fillStyle=this.moveCursor===c?"#cc2222":"#111111",e.font="bold 11px monospace",e.fillText(h.move.name.toUpperCase(),i[c].x,i[c].y),this.moveCursor===c&&e.fillText("\u25B6",i[c].x-12,i[c].y)}else e.fillStyle="#888888",e.font="11px monospace",e.fillText("-",i[c].x,i[c].y);let r=l[this.moveCursor];r&&(e.fillStyle="#333333",e.font="bold 10px monospace",e.fillText(`TYPE/${r.move.type.toUpperCase()}`,s-88,a+26),e.fillText(`PP  ${r.currentPp}/${r.move.pp}`,s-88,a+48));return}if(this.state==="BAG_MENU"){e.fillStyle="#111111",e.font="bold 11px monospace",e.fillText("BAG ITEMS:",16,a+20),this.playerData.inventory.forEach((l,i)=>{let r=a+36+i*16;e.fillStyle=this.bagCursor===i?"#cc2222":"#111111",e.fillText(`${l.name} x${l.count}`,28,r),this.bagCursor===i&&e.fillText("\u25B6",16,r)}),e.fillStyle="#666",e.font="10px monospace",e.fillText("[B] Back",s-65,a+20);return}this.state==="POKEMON_MENU"&&(e.fillStyle="#111111",e.font="bold 11px monospace",e.fillText("SELECT POK\xC9MON:",16,a+20),this.playerData.party.forEach((l,i)=>{let r=a+36+i*16;e.fillStyle=this.pokemonCursor===i?"#cc2222":"#111111",e.fillText(`${l.species.name} (Lv${l.level}) - ${Math.ceil(l.currentHp)}/${l.maxHp} HP`,28,r),this.pokemonCursor===i&&e.fillText("\u25B6",16,r)}),e.fillStyle="#666",e.font="10px monospace",e.fillText("[B] Back",s-65,a+20))}};var C=class{keysDown=new Set;justPressed=new Set;constructor(){window.addEventListener("keydown",e=>this.handleKeyDown(e)),window.addEventListener("keyup",e=>this.handleKeyUp(e))}handleKeyDown(e){if(n.unlock(),["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","Space"].includes(e.key)&&e.preventDefault(),!this.keysDown.has(e.code)){this.keysDown.add(e.code);let t=this.mapKey(e.code);t&&this.justPressed.add(t)}(e.key==="m"||e.key==="M")&&n.toggleMute()}handleKeyUp(e){this.keysDown.delete(e.code)}mapKey(e){switch(e){case"ArrowUp":case"KeyW":return"up";case"ArrowDown":case"KeyS":return"down";case"ArrowLeft":case"KeyA":return"left";case"ArrowRight":case"KeyD":return"right";case"KeyZ":case"Space":return"a";case"KeyX":case"Backspace":case"ShiftLeft":case"ShiftRight":return"b";case"Enter":case"Escape":case"KeyE":case"KeyI":case"Tab":return"start";default:return null}}isDown(e){switch(e){case"up":return this.keysDown.has("ArrowUp")||this.keysDown.has("KeyW");case"down":return this.keysDown.has("ArrowDown")||this.keysDown.has("KeyS");case"left":return this.keysDown.has("ArrowLeft")||this.keysDown.has("KeyA");case"right":return this.keysDown.has("ArrowRight")||this.keysDown.has("KeyD");case"a":return this.keysDown.has("KeyZ")||this.keysDown.has("Space");case"b":return this.keysDown.has("KeyX")||this.keysDown.has("Backspace")||this.keysDown.has("ShiftLeft")||this.keysDown.has("ShiftRight");case"start":return this.keysDown.has("Enter")||this.keysDown.has("Escape")||this.keysDown.has("KeyE")||this.keysDown.has("Tab");default:return!1}}isJustPressed(e){return this.justPressed.has(e)}triggerVirtualPress(e){n.unlock(),this.justPressed.add(e)}setVirtualDown(e,s){n.unlock();let t=`Virtual_${e}`;s?this.keysDown.has(t)||(this.keysDown.add(t),this.justPressed.add(e)):this.keysDown.delete(t)}update(){this.justPressed.clear()}};var k=class m{static TILE_SIZE=16;width=32;height=62;data;npcs=[{id:"oak",name:"Prof. Oak",x:8,y:50,direction:"down",dialog:["Ah, welcome to the world of Pok\xE9mon!","Travel north through Route 1 to reach PEWTER CITY.","Defeat Gym Leader Brock there to earn your first BOULDER BADGE!","Make sure to catch new Pok\xE9mon along the way!"],type:"professor",color:"#d2b48c"},{id:"nurse_pallet",name:"Nurse Joy",x:21,y:53,direction:"down",dialog:["Welcome to Pallet Town Care Station!","Let me heal your Pok\xE9mon team back to tip-top shape!","...Your Pok\xE9mon are now fully revitalized! Take care!"],type:"nurse",color:"#ff99b3"},{id:"trainer_joey",name:"Youngster Joey",x:17,y:35,direction:"left",dialog:["My Rattata is in the top percentage of all Rattata!","Let's see how tough you are in a Pok\xE9mon battle!"],type:"trainer",color:"#e06622",trainerParty:[{id:19,level:6},{id:16,level:7}],rewardMoney:250,afterDefeatDialog:["Aww man! Your Pok\xE9mon are seriously well trained!","Watch out for the rocks further north, Mankey and Geodude roam there!"]},{id:"trainer_liam",name:"Camper Liam",x:13,y:25,direction:"right",dialog:["Halt! Are you heading to Pewter City?","You can't challenge Brock without passing me first!"],type:"trainer",color:"#3388cc",trainerParty:[{id:56,level:8},{id:66,level:9}],rewardMoney:400,afterDefeatDialog:["Impressive battle! Brock specializes in rock-type Pok\xE9mon.","Water and Grass moves are super effective against Rock and Ground!"]},{id:"nurse_pewter",name:"Nurse Joy",x:8,y:16,direction:"down",dialog:["Welcome to Pewter City Pok\xE9mon Center!","Healing your Pok\xE9mon to full health!","...All set! May victory shine on your Gym match!"],type:"nurse",color:"#ff99b3"},{id:"clerk_mart",name:"Mart Clerk",x:23,y:16,direction:"down",dialog:["Welcome to the Pewter City Pok\xE9mon Mart!","Check out our stock: Pok\xE9 Balls, Great Balls, Potions & Revives!"],type:"clerk",color:"#44aa44"},{id:"pewter_citizen",name:"Museum Guide",x:12,y:6,direction:"down",dialog:["Welcome to PEWTER CITY - A stone gray city!","The Pewter Museum exhibits ancient fossils of prehistoric Pok\xE9mon.","The Gym is right beside us! Brock is known as the rock-solid Pok\xE9mon Trainer!"],type:"citizen",color:"#8888aa"},{id:"gym_leader_brock",name:"Gym Leader Brock",x:20,y:4,direction:"down",dialog:["I'm Brock, the PEWTER GYM LEADER!","I believe in rock-hard defense and determination!","My Pok\xE9mon are all rock-hard and have true grit!","Do you dare challenge my Geodude and mighty Onix?! Let\u2019s go!"],type:"gym_leader",color:"#996633",trainerParty:[{id:74,level:12},{id:95,level:14}],rewardMoney:1500,badge:"BOULDER BADGE",afterDefeatDialog:["I took you for granted! Your Pok\xE9mon\u2019s spirit broke through my rock defense!","As proof of your victory, I confer upon you the official BOULDER BADGE!","You have earned my utmost respect, Champion in the making!"]}];constructor(){this.data=this.generateMap()}generateMap(){let e=this.width,s=this.height,t=[];for(let i=0;i<s;i++){let r=[];for(let c=0;c<e;c++)r.push(1);t.push(r)}for(let i=0;i<e;i++)t[0][i]=3,t[1][i]=3,t[s-1][i]=3,t[s-2][i]=3;for(let i=0;i<s;i++)t[i][0]=3,t[i][1]=3,t[i][e-1]=3,t[i][e-2]=3;for(let i=44;i<=58;i++)t[i][15]=0,t[i][16]=0;for(let i=6;i<=26;i++)t[54][i]=0,t[55][i]=0;for(let i=50;i<=54;i++)t[i][8]=0,t[i][21]=0;for(let i=46;i<=49;i++)for(let r=5;r<=11;r++)t[i][r]=i<=47?6:7;t[49][8]=8;for(let i=49;i<=52;i++)for(let r=18;r<=24;r++)t[i][r]=i<=50?6:7;t[52][21]=8;for(let i=55;i<=58;i++)for(let r=23;r<=28;r++)t[i][r]=4;for(let i=4;i<=12;i++)t[44][i]=5;for(let i=19;i<=27;i++)t[44][i]=5;[[6,51],[7,51],[19,53],[20,53],[14,56],[14,57],[17,56],[17,57]].forEach(([i,r])=>{t[r][i]=9}),t[50][6]=10,t[54][13]=10;for(let i=35;i<=43;i++)t[i][15]=0,t[i][16]=0;for(let i=28;i<=34;i++)t[i][14]=0,t[i][15]=0;for(let i=22;i<=27;i++)t[i][15]=0,t[i][16]=0;for(let i=36;i<=41;i++)for(let r=5;r<=13;r++)t[i][r]=2;for(let i=34;i<=40;i++)for(let r=18;r<=26;r++)t[i][r]=2;for(let i=27;i<=32;i++)for(let r=4;r<=12;r++)t[i][r]=2;for(let i=24;i<=29;i++)for(let r=18;r<=27;r++)t[i][r]=2;[[3,26],[4,25],[28,28],[27,27],[28,32],[27,33],[3,38],[4,39]].forEach(([i,r])=>{t[r][i]=14}),t[38][14]=10,t[23][14]=10;for(let i=2;i<=21;i++)t[i][15]=0,t[i][16]=0;for(let i=4;i<=27;i++)t[10][i]=0,t[11][i]=0,t[18][i]=0,t[19][i]=0;for(let i=14;i<=18;i++)t[i][8]=0,t[i][23]=0;for(let i=5;i<=10;i++)t[i][20]=0;for(let i=9;i<=12;i++)for(let r=14;r<=17;r++)t[i][r]=4;for(let i=2;i<=5;i++)for(let r=17;r<=23;r++)t[i][r]=i<=3?11:12;t[5][20]=8,t[6][18]=10;for(let i=13;i<=16;i++)for(let r=5;r<=11;r++)t[i][r]=i<=14?6:7;t[16][8]=8;for(let i=13;i<=16;i++)for(let r=20;r<=26;r++)t[i][r]=i<=14?13:7;t[16][23]=8;for(let i=3;i<=6;i++)for(let r=5;r<=13;r++)t[i][r]=i<=4?11:7;return t[6][9]=8,t[7][7]=10,t[12][13]=10,[[13,8],[18,8],[13,13],[18,13],[4,8],[4,11],[27,8],[27,11],[16,2],[24,2]].forEach(([i,r])=>{t[r][i]=14}),t}isSolid(e,s){if(e<0||e>=this.width||s<0||s>=this.height)return!0;let t=this.data[s][e];if(t===3||t===4||t===5||t===6||t===7||t===11||t===12||t===13||t===14||t===10)return!0;for(let o of this.npcs)if(o.x===e&&o.y===s)return!0;return!1}getNPCAt(e,s){for(let t of this.npcs)if(t.x===e&&t.y===s)return t;return null}draw(e,s){let t=m.TILE_SIZE;for(let o=0;o<this.height;o++)for(let a=0;a<this.width;a++){let l=this.data[o][a],i=a*t,r=o*t;switch(l){case 0:e.fillStyle="#edd298",e.fillRect(i,r,t,t),e.fillStyle="#dab574",(a+o)%3===0&&e.fillRect(i+3,r+4,2,2),(a*2+o)%5===0&&e.fillRect(i+10,r+11,2,2);break;case 1:e.fillStyle="#5ca944",e.fillRect(i,r,t,t),e.fillStyle="#4f943a",(a+o)%4===0&&e.fillRect(i+4,r+4,3,2);break;case 2:e.fillStyle="#5ca944",e.fillRect(i,r,t,t),e.fillStyle="#2f741c",e.fillRect(i+2,r+2,3,12),e.fillRect(i+7,r+4,3,10),e.fillRect(i+11,r+2,3,12),e.fillStyle="#7ac95c",e.fillRect(i+3,r+1,2,3),e.fillRect(i+8,r+3,2,3),e.fillRect(i+12,r+1,2,3);break;case 3:e.fillStyle="#5ca944",e.fillRect(i,r,t,t),e.fillStyle="#22551a",e.beginPath(),e.arc(i+8,r+7,7,0,Math.PI*2),e.fill(),e.fillStyle="#39832d",e.beginPath(),e.arc(i+7,r+6,5,0,Math.PI*2),e.fill(),e.fillStyle="#653a1a",e.fillRect(i+6,r+11,4,5);break;case 4:e.fillStyle="#3b86e8",e.fillRect(i,r,t,t);let c=Math.sin(s*.005+a+o)*2;e.fillStyle="#7db6ff",e.fillRect(i+2+c,r+6,6,2),e.fillRect(i+8-c,r+11,5,2);break;case 5:e.fillStyle="#5ca944",e.fillRect(i,r,t,t),e.fillStyle="#9e6229",e.fillRect(i+2,r+3,12,3),e.fillRect(i+2,r+9,12,3),e.fillRect(i+4,r+1,3,15),e.fillRect(i+10,r+1,3,15);break;case 6:e.fillStyle="#cc3333",e.fillRect(i,r,t,t),e.fillStyle="#991111",e.fillRect(i,r+t-2,t,2),e.fillStyle="#ee5555",e.fillRect(i,r,t,2);break;case 7:e.fillStyle="#f3ebe1",e.fillRect(i,r,t,t),e.fillStyle="#d6c8b4",e.fillRect(i,r+7,t,1),a%2===0&&(e.fillStyle="#4da6ff",e.fillRect(i+4,r+3,8,8),e.fillStyle="#ffffff",e.fillRect(i+5,r+4,3,3));break;case 11:e.fillStyle="#556677",e.fillRect(i,r,t,t),e.fillStyle="#334455",e.fillRect(i,r+t-2,t,2),e.fillStyle="#778899",e.fillRect(i,r,t,2);break;case 12:e.fillStyle="#8a929a",e.fillRect(i,r,t,t),e.fillStyle="#5e656d",e.fillRect(i,r+7,t,1),e.fillStyle="#222",e.fillRect(i+4,r+4,8,8),e.fillStyle="#f0c040",e.fillRect(i+7,r+7,2,2);break;case 13:e.fillStyle="#2070d8",e.fillRect(i,r,t,t),e.fillStyle="#104899",e.fillRect(i,r+t-2,t,2),e.fillStyle="#5098ff",e.fillRect(i,r,t,2);break;case 14:e.fillStyle="#5ca944",e.fillRect(i,r,t,t),e.fillStyle="#6e747c",e.beginPath(),e.arc(i+8,r+8,6,0,Math.PI*2),e.fill(),e.fillStyle="#9aa0a8",e.beginPath(),e.arc(i+6,r+6,3,0,Math.PI*2),e.fill();break;case 8:e.fillStyle="#f3ebe1",e.fillRect(i,r,t,t),e.fillStyle="#7a3b1a",e.fillRect(i+2,r+2,12,14),e.fillStyle="#f5c542",e.fillRect(i+11,r+9,2,2);break;case 9:e.fillStyle="#5ca944",e.fillRect(i,r,t,t),e.fillStyle="#e83b70",e.fillRect(i+4,r+4,3,3),e.fillRect(i+10,r+8,3,3),e.fillStyle="#fff",e.fillRect(i+5,r+5,1,1),e.fillRect(i+11,r+9,1,1);break;case 10:e.fillStyle="#5ca944",e.fillRect(i,r,t,t),e.fillStyle="#8b5a2b",e.fillRect(i+2,r+3,12,8),e.fillRect(i+7,r+11,2,5),e.fillStyle="#dab574",e.fillRect(i+4,r+5,8,4);break}}this.npcs.forEach(o=>{this.drawNPC(e,o)})}drawNPC(e,s){let t=m.TILE_SIZE,o=s.x*t,a=s.y*t;e.fillStyle="rgba(0, 0, 0, 0.25)",e.beginPath(),e.ellipse(o+8,a+14,6,3,0,0,Math.PI*2),e.fill(),e.fillStyle=s.color,e.fillRect(o+4,a+6,8,8),e.fillStyle="#ffdfba",e.fillRect(o+5,a+2,6,6),s.type==="nurse"?(e.fillStyle="#ff66aa",e.fillRect(o+4,a+1,8,3),e.fillStyle="#fff",e.fillRect(o+6,a,4,3),e.fillStyle="#f00",e.fillRect(o+7,a+1,2,1)):s.type==="professor"?(e.fillStyle="#999",e.fillRect(o+4,a+1,8,3),e.fillStyle="#fff",e.fillRect(o+4,a+8,8,6)):s.type==="gym_leader"?(e.fillStyle="#553311",e.fillRect(o+3,a,10,3),e.fillRect(o+4,a-2,3,2),e.fillRect(o+9,a-2,3,2),e.fillStyle="#e67300",e.fillRect(o+5,a+7,6,6)):s.type==="clerk"?(e.fillStyle="#2255aa",e.fillRect(o+4,a,8,3),e.fillRect(o+4,a+7,8,7)):(e.fillStyle="#663300",e.fillRect(o+4,a+1,8,3)),e.fillStyle="#000",s.type==="gym_leader"?(e.fillRect(o+6,a+5,2,1),e.fillRect(o+9,a+5,2,1)):s.direction==="down"?(e.fillRect(o+6,a+4,1,2),e.fillRect(o+9,a+4,1,2)):s.direction==="left"?e.fillRect(o+5,a+4,1,2):s.direction==="right"&&e.fillRect(o+10,a+4,1,2)}};var L=class{map;player;isMoving=!1;moveProgress=0;startX=0;startY=0;targetX=0;targetY=0;stepCount=0;visualX=0;visualY=0;currentDialog=null;onEncounterTriggered;onTrainerBattleTriggered;onOpenMart;onOpenMenu;constructor(){this.map=new k,this.player={x:16,y:55,direction:"down",party:[],inventory:[{id:"pokeball",name:"Pok\xE9 Ball",count:10,price:200,type:"pokeball",description:"Catches wild Pok\xE9mon."},{id:"potion",name:"Potion",count:5,price:300,type:"potion",description:"Restores 20 HP to a Pok\xE9mon."}],money:1e3,badges:0,hasBoulderBadge:!1,seenPokemon:[],caughtPokemon:[],defeatedTrainers:[]},this.visualX=this.player.x*k.TILE_SIZE,this.visualY=this.player.y*k.TILE_SIZE}setStarter(e){let s=I(e,5);this.player.party=[s],this.player.seenPokemon.includes(e)||this.player.seenPokemon.push(e),this.player.caughtPokemon.includes(e)||this.player.caughtPokemon.push(e)}update(e,s){if(this.currentDialog){this.updateDialog(e,s);return}if((e.isJustPressed("select")||e.isJustPressed("start"))&&this.onOpenMenu){n.playConfirm(),this.onOpenMenu();return}let o=e.isDown("b")?.012:.006;if(this.isMoving){if(this.moveProgress+=o*s,this.moveProgress>=1)this.player.x=this.targetX,this.player.y=this.targetY,this.visualX=this.player.x*k.TILE_SIZE,this.visualY=this.player.y*k.TILE_SIZE,this.isMoving=!1,this.moveProgress=0,this.stepCount++,this.onStepComplete();else{let i=k.TILE_SIZE;this.visualX=(this.startX+(this.targetX-this.startX)*this.moveProgress)*i,this.visualY=(this.startY+(this.targetY-this.startY)*this.moveProgress)*i}return}if(e.isJustPressed("a")){let i=this.getFacingTile(),r=this.map.getNPCAt(i.x,i.y);if(r){this.interactWithNPC(r);return}if(i.x>=0&&i.x<this.map.width&&i.y>=0&&i.y<this.map.height&&this.map.data[i.y][i.x]===10){this.readSign(i.x,i.y);return}}let a=0,l=0;if(e.isDown("up")?(this.player.direction="up",l=-1):e.isDown("down")?(this.player.direction="down",l=1):e.isDown("left")?(this.player.direction="left",a=-1):e.isDown("right")&&(this.player.direction="right",a=1),a!==0||l!==0){let i=this.player.x+a,r=this.player.y+l;this.map.isSolid(i,r)?n.playBump():(this.isMoving=!0,this.moveProgress=0,this.startX=this.player.x,this.startY=this.player.y,this.targetX=i,this.targetY=r)}}readSign(e,s){n.playConfirm(),s>=45?e<=10?this.startDialog("Oak's Lab",["PROF. OAK'S POK\xC9MON RESEARCH LAB","Dedicated to uncovering the mysteries of Pok\xE9mon biology and habitat!"]):this.startDialog("Signboard",["PALLET TOWN - Shades of your journey await!","Head north onto Route 1 to begin your Pok\xE9mon journey!"]):s>=22&&s<=44?s>30?this.startDialog("Route 1 Sign",["ROUTE 1 - South to Pallet Town, North to Pewter City.","Wild Pok\xE9mon dwell inside the tall grass!"]):this.startDialog("Route 1 North",["TRAINER NOTICE: Ahead lies Pewter City.","Prepare your Pok\xE9mon before challenging Gym Leader Brock!"]):e>=17&&s<=8?this.startDialog("Pewter Gym",["PEWTER CITY POK\xC9MON GYM","LEADER: BROCK - The Rock-Solid Pok\xE9mon Trainer!"]):e<=10&&s<=8?this.startDialog("Pewter Museum",["PEWTER MUSEUM OF SCIENCE","Explore ancient fossils and rare space rocks!"]):this.startDialog("Pewter City",["PEWTER CITY - A Stone Gray City.","Visit the Pok\xE9mon Center and Mart to gear up for battle!"])}getFacingTile(){let e=this.player.x,s=this.player.y;return this.player.direction==="up"&&(s-=1),this.player.direction==="down"&&(s+=1),this.player.direction==="left"&&(e-=1),this.player.direction==="right"&&(e+=1),{x:e,y:s}}onStepComplete(){this.map.data[this.player.y][this.player.x]===2&&(n.playGrassRustle(),Math.random()<.17&&this.triggerWildBattle())}triggerWildBattle(){n.playEncounter();let e=x.reduce((l,i)=>l+i.weight,0),s=Math.random()*e,t=x[0];for(let l of x){if(s<l.weight){t=l;break}s-=l.weight}let o=Math.floor(Math.random()*(t.maxLvl-t.minLvl+1))+t.minLvl,a=I(t.id,o);this.player.seenPokemon.includes(a.species.id)||this.player.seenPokemon.push(a.species.id),this.onEncounterTriggered&&this.onEncounterTriggered(a)}interactWithNPC(e){if(this.player.direction==="up"&&(e.direction="down"),this.player.direction==="down"&&(e.direction="up"),this.player.direction==="left"&&(e.direction="right"),this.player.direction==="right"&&(e.direction="left"),n.playConfirm(),e.type==="nurse"){this.startDialog(e.name,e.dialog,()=>{n.playHealChime(),this.player.party.forEach(t=>{t.currentHp=t.maxHp,t.moves.forEach(o=>o.currentPp=o.move.pp)})});return}if(e.type==="clerk"){this.startDialog(e.name,e.dialog,()=>{this.onOpenMart&&this.onOpenMart()});return}let s=this.player.defeatedTrainers.includes(e.id);if(e.type==="trainer"||e.type==="gym_leader"){if(s){let t=e.afterDefeatDialog||e.dialog;this.startDialog(e.name,t)}else this.startDialog(e.name,e.dialog,()=>{let t=(e.trainerParty||[]).map(o=>I(o.id,o.level));t.forEach(o=>{this.player.seenPokemon.includes(o.species.id)||this.player.seenPokemon.push(o.species.id)}),this.onTrainerBattleTriggered&&this.onTrainerBattleTriggered(e.id,e.name,t,e.rewardMoney||300,e.badge)});return}this.startDialog(e.name,e.dialog)}startDialog(e,s,t){this.currentDialog={speaker:e,lines:s,currentLineIndex:0,displayedText:"",fullText:s[0]||"",charIndex:0,isFinished:!1,onComplete:t}}updateDialog(e,s){if(!this.currentDialog)return;let t=this.currentDialog;if(t.isFinished||(t.charIndex+=s*.045,t.charIndex>=t.fullText.length?(t.displayedText=t.fullText,t.isFinished=!0):t.displayedText=t.fullText.slice(0,Math.floor(t.charIndex))),e.isJustPressed("a")||e.isJustPressed("b"))if(!t.isFinished)t.displayedText=t.fullText,t.isFinished=!0,n.playSelect();else if(t.currentLineIndex++,t.currentLineIndex<t.lines.length)t.fullText=t.lines[t.currentLineIndex],t.displayedText="",t.charIndex=0,t.isFinished=!1,n.playSelect();else{let o=t.onComplete;this.currentDialog=null,n.playConfirm(),o&&o()}}draw(e,s,t,o){let a=Math.floor(s/2-this.visualX-k.TILE_SIZE/2),l=Math.floor(t/2-this.visualY-k.TILE_SIZE/2);e.save(),e.translate(a,l),this.map.draw(e,o),this.drawPlayer(e),e.restore(),this.currentDialog&&this.drawDialogBox(e,s,t)}drawPlayer(e){let s=Math.floor(this.visualX),t=Math.floor(this.visualY),o=this.isMoving?Math.floor(this.moveProgress*4)%4:0,a=o===1?-1:o===3?1:0;e.fillStyle="rgba(0, 0, 0, 0.28)",e.beginPath(),e.ellipse(s+8,t+14,6,3,0,0,Math.PI*2),e.fill(),e.fillStyle="#224488",e.fillRect(s+4+a,t+10,3,5),e.fillRect(s+9-a,t+10,3,5),e.fillStyle="#ffffff",e.fillRect(s+3+a,t+14,4,2),e.fillRect(s+9-a,t+14,4,2),e.fillStyle="#dd2222",e.fillRect(s+4,t+5,8,6),e.fillStyle="#ffffff",e.fillRect(s+6,t+5,4,5),e.fillStyle="#ffe0b2",e.fillRect(s+5,t+1,6,5),e.fillStyle="#dd2222",e.fillRect(s+4,t-2,8,4),e.fillStyle="#ffffff",this.player.direction==="down"?e.fillRect(s+6,t-1,4,2):this.player.direction==="left"?e.fillRect(s+3,t-1,4,2):this.player.direction==="right"&&e.fillRect(s+9,t-1,4,2),e.fillStyle="#000000",this.player.direction==="down"?(e.fillRect(s+6,t+3,1,2),e.fillRect(s+9,t+3,1,2)):this.player.direction==="left"?e.fillRect(s+5,t+3,1,2):this.player.direction==="right"&&e.fillRect(s+10,t+3,1,2)}drawDialogBox(e,s,t){let a=t-72-8,l=8,i=s-16;if(e.fillStyle="#ffffff",e.fillRect(l,a,i,72),e.strokeStyle="#222222",e.lineWidth=3,e.strokeRect(l,a,i,72),e.strokeStyle="#b0b0b0",e.lineWidth=1,e.strokeRect(l+3,a+3,i-6,66),this.currentDialog&&this.currentDialog.speaker&&(e.fillStyle="#3355aa",e.font="bold 11px monospace",e.fillText(this.currentDialog.speaker.toUpperCase(),l+12,a+16)),e.fillStyle="#111111",e.font="12px monospace",e.fillText(this.currentDialog?.displayedText||"",l+12,a+36),this.currentDialog?.isFinished){let r=a+72-14+Math.floor(Date.now()/250)%2*2;e.fillStyle="#d22",e.beginPath(),e.moveTo(l+i-20,r),e.lineTo(l+i-12,r),e.lineTo(l+i-16,r+6),e.closePath(),e.fill()}}};var O=class{canvas;ctx;input;overworld;battle=null;mode="STARTER_SELECT";starterCursor=1;starters=[{id:1,name:"Bulbasaur",type:"Grass / Poison",desc:"A strange seed was planted on its back at birth."},{id:4,name:"Charmander",type:"Fire",desc:"The flame on its tail indicates its life force and mood."},{id:7,name:"Squirtle",type:"Water",desc:"Shoots water at prey while in the water. Withdraws into shell."}];transitionTimer=0;pendingBattle=null;startMenuCursor=0;startMenuItems=["POK\xC9DEX","POK\xC9MON","BAG","TRAINER","SAVE","EXIT"];pokedexCursor=0;pokedexScrollOffset=0;martCursor=0;martStock=[{id:"pokeball",name:"Pok\xE9 Ball",count:1,price:200,type:"pokeball",description:"Catches wild Pok\xE9mon."},{id:"greatball",name:"Great Ball",count:1,price:600,type:"pokeball",description:"Higher catch rate than Pok\xE9 Ball."},{id:"potion",name:"Potion",count:1,price:300,type:"potion",description:"Restores 20 HP to a Pok\xE9mon."},{id:"super_potion",name:"Super Potion",count:1,price:700,type:"potion",description:"Restores 50 HP to a Pok\xE9mon."},{id:"revive",name:"Revive",count:1,price:1500,type:"revive",description:"Revitalizes a fainted Pok\xE9mon to half HP."}];martMessage="";toastMessage=null;toastTimer=0;lastTime=0;constructor(e){this.canvas=e,this.ctx=e.getContext("2d"),this.ctx.imageSmoothingEnabled=!1,this.input=new C,this.overworld=new L,this.overworld.onEncounterTriggered=s=>{this.startWildBattleTransition(s)},this.overworld.onTrainerBattleTriggered=(s,t,o,a,l)=>{this.startTrainerBattleTransition(s,t,o,a,l)},this.overworld.onOpenMart=()=>{n.playConfirm(),this.martCursor=0,this.martMessage="What would you like to purchase?",this.mode="MART_SHOP"},this.overworld.onOpenMenu=()=>{this.startMenuCursor=0,this.mode="START_MENU"},this.starters.forEach(s=>{let t=T.get(s.id);t&&b.loadImage(t.spriteFront)}),this.loadGame(),this.lastTime=performance.now(),requestAnimationFrame(s=>this.loop(s))}startWildBattleTransition(e){this.mode="BATTLE_TRANSITION",this.transitionTimer=0,this.pendingBattle={enemy:e},n.stopBgm()}startTrainerBattleTransition(e,s,t,o,a){this.mode="BATTLE_TRANSITION",this.transitionTimer=0,this.pendingBattle={enemy:t[0],isTrainer:!0,trainerName:s,npcId:e,enemyParty:t,rewardMoney:o,badge:a},n.stopBgm()}loop(e){let s=Math.min(100,e-this.lastTime);this.lastTime=e,this.toastTimer>0&&(this.toastTimer-=s,this.toastTimer<=0&&(this.toastMessage=null)),this.update(s),this.draw(e),this.input.update(),requestAnimationFrame(t=>this.loop(t))}update(e){switch(this.mode){case"STARTER_SELECT":this.updateStarterSelect();break;case"OVERWORLD":this.overworld.update(this.input,e);break;case"BATTLE_TRANSITION":if(this.transitionTimer+=e,this.transitionTimer>=1e3&&this.pendingBattle){let s=this.pendingBattle;this.battle=new A(this.overworld.player,s.enemy,{isTrainer:s.isTrainer,trainerName:s.trainerName,npcId:s.npcId,enemyParty:s.enemyParty,rewardMoney:s.rewardMoney,badge:s.badge},t=>this.endBattle(t)),this.pendingBattle=null,this.mode="BATTLE"}break;case"BATTLE":this.battle&&this.battle.update(this.input,e);break;case"START_MENU":this.updateStartMenu();break;case"POKEDEX_VIEW":this.updatePokedexView();break;case"TRAINER_CARD":(this.input.isJustPressed("b")||this.input.isJustPressed("a"))&&(n.playCancel(),this.mode="START_MENU");break;case"MART_SHOP":this.updateMartShop();break}}updateStarterSelect(){if(this.input.isJustPressed("left")&&this.starterCursor>0&&(this.starterCursor--,n.playSelect()),this.input.isJustPressed("right")&&this.starterCursor<this.starters.length-1&&(this.starterCursor++,n.playSelect()),this.input.isJustPressed("a")){let e=this.starters[this.starterCursor];n.playConfirm(),this.overworld.setStarter(e.id),n.playOverworldBgm(),this.mode="OVERWORLD",this.overworld.startDialog("Prof. Oak",[`You chose ${e.name.toUpperCase()}! What a fantastic companion!`,"Here are 10 Pok\xE9 Balls and 5 Potions for your journey.","Travel north through Route 1 to reach Pewter City and challenge Gym Leader Brock!"])}}updateStartMenu(){if(this.input.isJustPressed("up")&&(this.startMenuCursor=(this.startMenuCursor-1+this.startMenuItems.length)%this.startMenuItems.length,n.playSelect()),this.input.isJustPressed("down")&&(this.startMenuCursor=(this.startMenuCursor+1)%this.startMenuItems.length,n.playSelect()),this.input.isJustPressed("b")){n.playCancel(),this.mode="OVERWORLD";return}if(this.input.isJustPressed("a"))switch(n.playConfirm(),this.startMenuItems[this.startMenuCursor]){case"POK\xC9DEX":this.pokedexCursor=0,this.pokedexScrollOffset=0,this.mode="POKEDEX_VIEW";break;case"POK\xC9MON":this.showToast(`Party: ${this.overworld.player.party.map(t=>t.species.name).join(", ")}`);break;case"BAG":let s=this.overworld.player.inventory.map(t=>`${t.name} x${t.count}`).join(" | ");this.showToast(`Money: $${this.overworld.player.money} | ${s}`);break;case"TRAINER":this.mode="TRAINER_CARD";break;case"SAVE":this.saveGame(),n.playLevelUp(),this.showToast("Game saved successfully to browser storage!"),this.mode="OVERWORLD";break;case"EXIT":this.mode="OVERWORLD";break}}updatePokedexView(){let e=w.length;this.input.isJustPressed("up")&&this.pokedexCursor>0&&(this.pokedexCursor--,this.pokedexCursor<this.pokedexScrollOffset&&this.pokedexScrollOffset--,n.playSelect()),this.input.isJustPressed("down")&&this.pokedexCursor<e-1&&(this.pokedexCursor++,this.pokedexCursor>=this.pokedexScrollOffset+7&&this.pokedexScrollOffset++,n.playSelect()),(this.input.isJustPressed("b")||this.input.isJustPressed("a"))&&(n.playCancel(),this.mode="START_MENU")}updateMartShop(){if(this.input.isJustPressed("up")&&(this.martCursor=(this.martCursor-1+this.martStock.length)%this.martStock.length,n.playSelect()),this.input.isJustPressed("down")&&(this.martCursor=(this.martCursor+1)%this.martStock.length,n.playSelect()),this.input.isJustPressed("b")){n.playCancel(),this.mode="OVERWORLD";return}if(this.input.isJustPressed("a")){let e=this.martStock[this.martCursor];if(this.overworld.player.money>=e.price){this.overworld.player.money-=e.price;let s=this.overworld.player.inventory.find(t=>t.id===e.id);s?s.count++:this.overworld.player.inventory.push({...e,count:1}),n.playConfirm(),this.martMessage=`Purchased 1 ${e.name}! Thank you!`}else n.playBump(),this.martMessage="You don't have enough money for that!"}}showToast(e){this.toastMessage=e,this.toastTimer=2500}saveGame(){try{let e={player:this.overworld.player,timestamp:Date.now()};localStorage.setItem("pokemon_web_save",JSON.stringify(e))}catch(e){console.warn("Save failed:",e)}}loadGame(){try{let e=localStorage.getItem("pokemon_web_save");if(!e)return!1;let s=JSON.parse(e);if(s&&s.player&&s.player.party&&s.player.party.length>0)return this.overworld.player=s.player,this.overworld.visualX=this.overworld.player.x*16,this.overworld.visualY=this.overworld.player.y*16,this.mode="OVERWORLD",n.playOverworldBgm(),this.showToast("Save data loaded! Welcome back!"),!0}catch(e){console.warn("Load failed:",e)}return!1}endBattle(e){this.battle=null,this.mode="OVERWORLD",n.playOverworldBgm()}draw(e){let s=this.canvas.width,t=this.canvas.height;switch(this.ctx.clearRect(0,0,s,t),this.mode){case"STARTER_SELECT":this.drawStarterSelect(s,t);break;case"OVERWORLD":case"START_MENU":this.overworld.draw(this.ctx,s,t,e),this.drawOverworldHud(s),this.mode==="START_MENU"&&this.drawStartMenu(s,t);break;case"BATTLE_TRANSITION":this.overworld.draw(this.ctx,s,t,e);let o=this.transitionTimer/1e3;Math.floor(o*8)%2===1?(this.ctx.fillStyle="#000000",this.ctx.fillRect(0,0,s,t)):(this.ctx.fillStyle=`rgba(255, 255, 255, ${1-o})`,this.ctx.fillRect(0,0,s,t));break;case"BATTLE":this.battle&&this.battle.draw(this.ctx,s,t);break;case"POKEDEX_VIEW":this.drawPokedexView(s,t);break;case"TRAINER_CARD":this.drawTrainerCard(s,t);break;case"MART_SHOP":this.drawMartShop(s,t);break}this.toastMessage&&this.drawToast(s,t)}drawStarterSelect(e,s){let t=this.ctx.createLinearGradient(0,0,0,s);t.addColorStop(0,"#1a3b5c"),t.addColorStop(1,"#0e1d2e"),this.ctx.fillStyle=t,this.ctx.fillRect(0,0,e,s),this.ctx.fillStyle="#ffffff",this.ctx.font="bold 13px monospace",this.ctx.textAlign="center",this.ctx.fillText("PROF. OAK: CHOOSE YOUR STARTER POK\xC9MON",e/2,26),this.ctx.font="10px monospace",this.ctx.fillStyle="#99ccff",this.ctx.fillText("Use [Left / Right] and press [A / Z / Enter] to choose",e/2,42);let o=90,a=135,l=14,i=(e-(o*3+l*2))/2,r=56;this.starters.forEach((p,y)=>{let g=i+y*(o+l),u=this.starterCursor===y;this.ctx.fillStyle=u?"#ffffff":"#1e3247",this.ctx.fillRect(g,r,o,a),this.ctx.strokeStyle=u?"#ffcc00":"#446688",this.ctx.lineWidth=u?3:1,this.ctx.strokeRect(g,r,o,a),this.ctx.fillStyle=u?"#eef4ff":"#152538",this.ctx.beginPath(),this.ctx.ellipse(g+o/2,r+58,32,12,0,0,Math.PI*2),this.ctx.fill();let M=T.get(p.id);if(M){let P=b.getImage(M.spriteFront);P&&this.ctx.drawImage(P,g+13,r+12,64,64)}this.ctx.textAlign="center",this.ctx.fillStyle=u?"#111111":"#ffffff",this.ctx.font="bold 11px monospace",this.ctx.fillText(p.name.toUpperCase(),g+o/2,r+86),this.ctx.font="9px monospace",this.ctx.fillStyle=u?"#0066cc":"#88bbff",this.ctx.fillText(p.type,g+o/2,r+102),u&&(this.ctx.fillStyle="#ff2222",this.ctx.font="bold 12px monospace",this.ctx.fillText("\u25BC CHOSEN",g+o/2,r+122))});let c=this.starters[this.starterCursor],h=r+a+12;this.ctx.fillStyle="#0f1a26",this.ctx.fillRect(i,h,o*3+l*2,42),this.ctx.strokeStyle="#446688",this.ctx.lineWidth=1,this.ctx.strokeRect(i,h,o*3+l*2,42),this.ctx.fillStyle="#ffffff",this.ctx.font="10px monospace",this.ctx.textAlign="center",this.ctx.fillText(c.desc,e/2,h+24),this.ctx.textAlign="left"}drawOverworldHud(e){this.ctx.fillStyle="rgba(0, 0, 0, 0.75)",this.ctx.fillRect(0,0,e,22),this.ctx.fillStyle="#ffffff",this.ctx.font="bold 10px monospace";let s=this.overworld.player.party[0];s&&this.ctx.fillText(`LV${s.level} ${s.species.name} (${Math.ceil(s.currentHp)}/${s.maxHp} HP)`,8,15),this.ctx.fillStyle="#ffcc00",this.ctx.fillText(`$${this.overworld.player.money}`,e-150,15),this.overworld.player.hasBoulderBadge&&(this.ctx.fillStyle="#99bbdd",this.ctx.fillText("[\u2605BADGE]",e-95,15)),this.ctx.fillStyle="#66ff66",this.ctx.fillText("[ESC]MENU",e-48,15)}drawStartMenu(e,s){let a=e-105-10,l=28;this.ctx.fillStyle="#ffffff",this.ctx.fillRect(a,l,105,135),this.ctx.strokeStyle="#222222",this.ctx.lineWidth=3,this.ctx.strokeRect(a,l,105,135),this.startMenuItems.forEach((i,r)=>{let c=l+20+r*19;this.ctx.fillStyle=this.startMenuCursor===r?"#cc2222":"#111111",this.ctx.font="bold 10px monospace",this.ctx.fillText(i,a+22,c),this.startMenuCursor===r&&this.ctx.fillText("\u25B6",a+8,c)})}drawPokedexView(e,s){this.ctx.fillStyle="#c72b2b",this.ctx.fillRect(0,0,e,s),this.ctx.fillStyle="#ffffff",this.ctx.font="bold 12px monospace",this.ctx.fillText("POK\xC9DEX LORE ARCHIVE",16,20);let t=this.overworld.player.caughtPokemon.length,o=this.overworld.player.seenPokemon.length;this.ctx.font="10px monospace",this.ctx.fillStyle="#ffdd44",this.ctx.fillText(`SEEN: ${o}   CAUGHT: ${t}`,e-155,20);let a=10,l=28,i=125,r=195;this.ctx.fillStyle="#f8f8f8",this.ctx.fillRect(a,l,i,r),this.ctx.strokeStyle="#222",this.ctx.lineWidth=2,this.ctx.strokeRect(a,l,i,r),w.slice(this.pokedexScrollOffset,this.pokedexScrollOffset+8).forEach((v,E)=>{let $=this.pokedexScrollOffset+E,W=this.pokedexCursor===$,D=l+20+E*22,B=this.overworld.player.caughtPokemon.includes(v.id),_=B||this.overworld.player.seenPokemon.includes(v.id);W&&(this.ctx.fillStyle="#ffe0b2",this.ctx.fillRect(a+2,D-14,i-4,20)),this.ctx.font="bold 9px monospace",this.ctx.fillStyle=B?"#cc2222":_?"#2255aa":"#888888";let U=String(v.id).padStart(3,"0"),F=B?"\u2605":_?"\u25CB":"-",Y=_?v.name.toUpperCase():"---------";this.ctx.fillText(`${F}#${U} ${Y.slice(0,9)}`,a+6,D)});let h=145,p=28,y=e-h-10,g=195;this.ctx.fillStyle="#f0f5fa",this.ctx.fillRect(h,p,y,g),this.ctx.strokeStyle="#222",this.ctx.lineWidth=2,this.ctx.strokeRect(h,p,y,g);let u=w[this.pokedexCursor],M=this.overworld.player.seenPokemon.includes(u.id)||this.overworld.player.caughtPokemon.includes(u.id),P=this.overworld.player.caughtPokemon.includes(u.id);if(M){this.ctx.fillStyle="#ffffff",this.ctx.fillRect(h+8,p+8,64,64),this.ctx.strokeStyle="#888",this.ctx.strokeRect(h+8,p+8,64,64);let v=b.getImage(u.spriteFront);v&&this.ctx.drawImage(v,h+8,p+8,64,64),this.ctx.fillStyle="#111",this.ctx.font="bold 11px monospace",this.ctx.fillText(`No. ${String(u.id).padStart(3,"0")}`,h+80,p+22),this.ctx.fillText(u.name.toUpperCase(),h+80,p+38),this.ctx.font="9px monospace",this.ctx.fillStyle="#666",this.ctx.fillText(u.category,h+80,p+52),this.ctx.fillStyle="#0055bb",this.ctx.fillText(u.types.map(E=>E.toUpperCase()).join("/"),h+80,p+66),this.ctx.fillStyle="#222",this.ctx.font="9px monospace",this.ctx.fillText(`HT: ${u.height}  WT: ${u.weight}`,h+8,p+88),this.ctx.fillStyle="#e8eff5",this.ctx.fillRect(h+6,p+98,y-12,70),this.ctx.strokeStyle="#aac",this.ctx.strokeRect(h+6,p+98,y-12,70),this.ctx.fillStyle="#222",this.ctx.font="8px monospace",this.wrapText(this.ctx,u.entryLore,h+10,p+112,y-20,11),this.ctx.fillStyle=P?"#20aa40":"#888",this.ctx.font="bold 9px monospace",this.ctx.fillText(P?"STATUS: CAUGHT":"STATUS: SEEN ONLY",h+10,p+184)}else this.ctx.fillStyle="#666",this.ctx.font="bold 12px monospace",this.ctx.fillText("??? UNKNOWN",h+24,p+90),this.ctx.font="9px monospace",this.ctx.fillText("Encounter this Pok\xE9mon in the",h+10,p+115),this.ctx.fillText("wild or with a Trainer to",h+10,p+128),this.ctx.fillText("unlock its Pok\xE9dex profile.",h+10,p+141);this.ctx.fillStyle="#ffffff",this.ctx.font="9px monospace",this.ctx.fillText("[B / A] RETURN TO MENU",16,s-8)}drawTrainerCard(e,s){let a=e-40,l=s-50;this.ctx.fillStyle="#f5e4c8",this.ctx.fillRect(20,25,a,l),this.ctx.strokeStyle="#8b5a2b",this.ctx.lineWidth=4,this.ctx.strokeRect(20,25,a,l),this.ctx.fillStyle="#8b5a2b",this.ctx.font="bold 12px monospace",this.ctx.fillText("OFFICIAL TRAINER CARD",36,47),this.ctx.fillStyle="#111",this.ctx.font="10px monospace",this.ctx.fillText("NAME: RED",36,75),this.ctx.fillText(`MONEY: $${this.overworld.player.money}`,36,95),this.ctx.fillText(`POK\xC9DEX: ${this.overworld.player.caughtPokemon.length} Caught / ${this.overworld.player.seenPokemon.length} Seen`,36,115),this.ctx.fillStyle="#443322",this.ctx.font="bold 11px monospace",this.ctx.fillText("GYM BADGES:",36,145);for(let i=0;i<8;i++){let r=40+i*30,c=157;this.ctx.fillStyle="#d2b48c",this.ctx.fillRect(r,c,22,22),this.ctx.strokeStyle="#8b5a2b",this.ctx.lineWidth=1,this.ctx.strokeRect(r,c,22,22),i===0&&this.overworld.player.hasBoulderBadge?(this.ctx.fillStyle="#8a929a",this.ctx.beginPath(),this.ctx.arc(r+11,c+11,8,0,Math.PI*2),this.ctx.fill(),this.ctx.fillStyle="#f0c040",this.ctx.font="bold 9px monospace",this.ctx.fillText("B",r+7,c+15)):(this.ctx.fillStyle="#bb9977",this.ctx.font="9px monospace",this.ctx.fillText("-",r+8,c+15))}this.overworld.player.hasBoulderBadge&&(this.ctx.fillStyle="#0066cc",this.ctx.font="bold 9px monospace",this.ctx.fillText("\u2605 BOULDER BADGE (Leader Brock - Pewter City)",36,197)),this.ctx.fillStyle="#666",this.ctx.font="9px monospace",this.ctx.fillText("[B] Back",20+a-60,25+l-12)}drawMartShop(e,s){this.ctx.fillStyle="#225588",this.ctx.fillRect(0,0,e,s),this.ctx.fillStyle="#ffffff",this.ctx.font="bold 12px monospace",this.ctx.fillText("POK\xC9MON MART - PEWTER CITY",16,22),this.ctx.fillStyle="#ffdd44",this.ctx.font="bold 11px monospace",this.ctx.fillText(`YOUR CASH: $${this.overworld.player.money}`,e-165,22);let t=14,o=32,a=e-28,l=135;this.ctx.fillStyle="#ffffff",this.ctx.fillRect(t,o,a,l),this.ctx.strokeStyle="#102844",this.ctx.lineWidth=2,this.ctx.strokeRect(t,o,a,l),this.martStock.forEach((c,h)=>{let p=o+22+h*24,y=this.martCursor===h;y&&(this.ctx.fillStyle="#e0efff",this.ctx.fillRect(t+2,p-15,a-4,22)),this.ctx.fillStyle=y?"#cc2222":"#111111",this.ctx.font="bold 10px monospace",this.ctx.fillText(`${y?"\u25B6 ":"  "}${c.name.toUpperCase()}`,t+10,p),this.ctx.fillStyle="#2255aa",this.ctx.fillText(`$${c.price}`,t+175,p);let g=this.overworld.player.inventory.find(u=>u.id===c.id)?.count||0;this.ctx.fillStyle="#666",this.ctx.fillText(`Bag: x${g}`,t+230,p)});let i=s-62;this.ctx.fillStyle="#ffffff",this.ctx.fillRect(t,i,a,52),this.ctx.strokeStyle="#102844",this.ctx.lineWidth=2,this.ctx.strokeRect(t,i,a,52),this.ctx.fillStyle="#111111",this.ctx.font="10px monospace",this.ctx.fillText(this.martMessage,t+12,i+22);let r=this.martStock[this.martCursor];r&&(this.ctx.fillStyle="#555555",this.ctx.font="9px monospace",this.ctx.fillText(r.description,t+12,i+38))}drawToast(e,s){this.toastMessage&&(this.ctx.fillStyle="rgba(10, 20, 30, 0.92)",this.ctx.fillRect(16,26,e-32,28),this.ctx.strokeStyle="#ffcc00",this.ctx.lineWidth=2,this.ctx.strokeRect(16,26,e-32,28),this.ctx.fillStyle="#ffffff",this.ctx.font="bold 9px monospace",this.ctx.textAlign="center",this.ctx.fillText(this.toastMessage,e/2,43),this.ctx.textAlign="left")}wrapText(e,s,t,o,a,l){let i=s.split(" "),r="",c=o;for(let h=0;h<i.length;h++){let p=r+i[h]+" ";e.measureText(p).width>a&&h>0?(e.fillText(r,t,c),r=i[h]+" ",c+=l):r=p}e.fillText(r,t,c)}};function G(){let m=document.getElementById("game-canvas");if(!m){console.error("Canvas element not found!");return}let e=new O(m),s=document.getElementById("btn-sound");s&&s.addEventListener("click",()=>{let a=n.toggleMute();s.textContent=a?"\u{1F507} AUDIO OFF":"\u{1F50A} AUDIO ON",s.style.color=a?"#ff7777":"#77ff77"});let t=document.getElementById("btn-fullscreen");t&&t.addEventListener("click",()=>{let a=document.querySelector(".screen-frame");document.fullscreenElement?document.exitFullscreen().catch(()=>{}):a&&a.requestFullscreen&&a.requestFullscreen().catch(l=>{console.warn("Fullscreen request failed:",l)})});let o=(a,l)=>{let i=c=>{c.preventDefault(),a.classList.add("pressed"),e.input.setVirtualDown(l,!0)},r=c=>{c.preventDefault(),a.classList.remove("pressed"),e.input.setVirtualDown(l,!1)};a.addEventListener("mousedown",i),a.addEventListener("mouseup",r),a.addEventListener("mouseleave",r),a.addEventListener("touchstart",i,{passive:!1}),a.addEventListener("touchend",r,{passive:!1}),a.addEventListener("touchcancel",r,{passive:!1})};document.querySelectorAll(".dpad-btn").forEach(a=>{let l=a.dataset.key;l&&o(a,l)}),document.querySelectorAll(".round-btn").forEach(a=>{let l=a.dataset.key;l&&o(a,l)})}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",G):G();})();
+
+  </script>
+</body>
+</html>

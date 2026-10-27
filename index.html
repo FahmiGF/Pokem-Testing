@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pokémon 2D Web Adventure</title>
+  <script>
+    // If opened directly via file://, redirect to the standalone play.html
+    if (window.location.protocol === 'file:') {
+      window.location.replace('./play.html');
+    }
+  </script>
+  <link rel="stylesheet" href="/src/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Header Controls -->
+    <header class="game-header">
+      <div class="brand">
+        <span class="pokeball-icon"></span>
+        <h1>POKÉMON 2D WEB</h1>
+      </div>
+      <div class="header-actions">
+        <button id="btn-sound" class="btn-retro" title="Toggle Sound (M)">🔊 AUDIO ON</button>
+        <button id="btn-fullscreen" class="btn-retro" title="Toggle Fullscreen">⛶ FULL</button>
+      </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="console-body">
+      <div class="screen-frame">
+        <div class="screen-glare"></div>
+        <canvas id="game-canvas" width="320" height="240"></canvas>
+      </div>
+
+      <!-- Controls & Quick Guide -->
+      <div class="controls-container">
+        <!-- Virtual D-PAD -->
+        <div class="dpad" id="dpad">
+          <button class="dpad-btn up" data-key="up" aria-label="Up">▲</button>
+          <div class="dpad-middle">
+            <button class="dpad-btn left" data-key="left" aria-label="Left">◀</button>
+            <div class="dpad-center"></div>
+            <button class="dpad-btn right" data-key="right" aria-label="Right">▶</button>
+          </div>
+          <button class="dpad-btn down" data-key="down" aria-label="Down">▼</button>
+        </div>
+
+        <!-- System / Help Info -->
+        <div class="instructions-panel">
+          <h3>🎮 KONTROL:</h3>
+          <p><kbd>W A S D</kbd> / <kbd>↑ ↓ ← →</kbd> : Gerak / Navigasi</p>
+          <p><kbd>Z</kbd> / <kbd>Space</kbd> : [A] Aksi / Pilih / Bicara</p>
+          <p><kbd>X</kbd> : [B] Batal | <kbd>Shift</kbd> : Lari Cepat</p>
+          <p><kbd>Enter</kbd> / <kbd>Esc</kbd> : [START] Menu / Pokédex / Save</p>
+        </div>
+
+        <!-- Action Buttons (A, B) & Start -->
+        <div class="action-column">
+          <div class="action-buttons">
+            <div class="btn-group">
+              <button class="round-btn btn-b" data-key="b" aria-label="B Button">B</button>
+              <span class="btn-label">Batal (X)</span>
+            </div>
+            <div class="btn-group">
+              <button class="round-btn btn-a" data-key="a" aria-label="A Button">A</button>
+              <span class="btn-label">Pilih (Z)</span>
+            </div>
+          </div>
+          <div class="system-buttons">
+            <button class="pill-btn round-btn" data-key="start" aria-label="Start Button">START</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="game-footer">
+      <p>Dibuat dengan HTML5 Canvas, Web Audio API & TypeScript • Berjalan 100% di browser</p>
+    </footer>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
