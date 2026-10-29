@@ -12,7 +12,7 @@ Game Pokémon 2D berbasis web (canvas) yang ditulis dalam **TypeScript + Vite**,
 | Mode pengembangan | klik ganda **`Buka_Server.bat`** | Menjalankan `npm run dev` (Vite) + buka `localhost:5173` |
 | Build ulang | `npm install` lalu `npm run build` | Setelah mengubah file di `src/` |
 
-**Kontrol:** `W A S D` / `↑ ↓ ← →` gerak · `Z` / `Space` aksi (A) · `X` batal (B) · `Shift` lari · `Enter`/`Esc` menu & Pokédex · tombol layar sentuh (D-Pad, A/B) untuk HP.
+**Kontrol:** `W A S D` / `↑ ↓ ← →` gerak · `Z` / `Space` aksi (A) · `X` batal (B) · `Shift` lari · `T` teleport cepat · `R` mount · `Enter`/`Esc` menu, Pokédex & **ARCADE** · tombol layar sentuh (D-Pad, A/B) untuk HP.
 
 ---
 
@@ -86,7 +86,11 @@ Game Pokémon 2D berbasis web (canvas) yang ditulis dalam **TypeScript + Vite**,
 
 #### `src/engine/overworld.ts` (513 baris)
 - **Maksud:** Dunia luar: gerak pemain grid-per-grid (lengan animasi langkah), tabrakan dengan tile, NPC & dialog, acara bertemu Pokémon liar dari `WILD_ENCOUNTER_POOL`, serta transisi ke pertempuran.
-- **----- Update:** State gerak kini dipecah (`isMoving`, timer langkah) supaya animasi halus dan pertemuan liar dicek setelah pemain selesai berpindah kotak.
+- **----- Update:** State gerak kini dipecah (`isMoving`, timer langkah) supaya animasi halus dan pertemuan liar dicek setelah pemain selesai berpindah kotak. Setiap zona juga mendapat terminal teleport (`attachZoneFacilities`) dan NPC Pixel membuka Arcade.
+
+#### `src/engine/arcade.ts`
+- **Maksud:** Mode Pixel Arcade berisi 6 mini-game (Neon Pong, Flappy Pidgey, Space Invaders, Pac-Ghost, Snake Route 1, Brick Breaker) dengan menu kabinet, high score, dan hadiah koin/gem.
+- **----- Update:** Dibuka dari **START → ARCADE** atau NPC Pixel di Pallet; skor tertinggi disimpan di `player.arcadeHighScores`, reward dibatasi agar ekonomi tetap seimbang.
 
 #### `src/engine/battle.ts` (1068 baris — terbesar)
 - **Maksud:** Sistem pertempuran giliran: intro pertarungan, menu utama (Fight/Bag/Pokémon/Run), pemilihan jurus, hitungan damage, efektivitas tipe, status PP/HP, tangkapan Pokémon, dan layar kemenangan/pelarian.

@@ -94,6 +94,9 @@ export const TYPE_CHART: Record<PokemonType, Partial<Record<PokemonType, number>
     ghost: 2.0,
     normal: 0.0,
   },
+  dragon: {
+    dragon: 2.0,
+  },
 };
 
 export function getTypeEffectiveness(attackType: PokemonType, defenderTypes: PokemonType[]): number {

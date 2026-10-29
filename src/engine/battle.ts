@@ -75,6 +75,9 @@ export class BattleSystem {
   // Visual effects
   private screenShake: number = 0;
   private flashAlpha: number = 0;
+  public comboHits: number = 0;
+  private comboTarget: number = Math.random() < 0.5 ? 4 : 5;
+  private boomParticles: { x: number; y: number; vx: number; vy: number; radius: number; color: string; life: number; maxLife: number }[] = [];
 
   // Catch animation
   private catchWobbleCount: number = 0;
@@ -144,6 +147,17 @@ export class BattleSystem {
     }
     if (this.flashAlpha > 0) {
       this.flashAlpha = Math.max(0, this.flashAlpha - deltaMs * 0.003);
+    }
+
+    // Update boom particles
+    for (let i = this.boomParticles.length - 1; i >= 0; i--) {
+      const p = this.boomParticles[i];
+      p.x += p.vx * (deltaMs / 16);
+      p.y += p.vy * (deltaMs / 16);
+      p.life += deltaMs;
+      if (p.life >= p.maxLife) {
+        this.boomParticles.splice(i, 1);
+      }
     }
 
     switch (this.state) {
@@ -344,6 +358,11 @@ export class BattleSystem {
         this.setMessage(`Used REVIVE! ${fainted.species.name} was revitalized!`, () => {
           this.executeEnemyAction();
         });
+      } else {
+        soundManager.playBump();
+        this.setMessage(`${item.name} can't be used in battle!`, () => {
+          this.state = 'BAG_MENU';
+        });
       }
     }
   }
@@ -462,8 +481,9 @@ export class BattleSystem {
         if (!this.playerData.caughtPokemon.includes(this.enemyPokemon.species.id)) {
           this.playerData.caughtPokemon.push(this.enemyPokemon.species.id);
         }
+        this.playerData.expTokens = (this.playerData.expTokens || 0) + 60;
 
-        this.setMessage(`All right! ${this.enemyPokemon.species.name.toUpperCase()} was caught!`, () => {
+        this.setMessage(`All right! ${this.enemyPokemon.species.name.toUpperCase()} was caught! (+60 EXP Tokens)`, () => {
           if (this.playerData.party.length < 6) {
             this.playerData.party.push(this.enemyPokemon);
             this.setMessage(`${this.enemyPokemon.species.name} was added to your party!`, () => {
@@ -487,24 +507,44 @@ export class BattleSystem {
   // --- Turn Execution ---
   private prepareTurn() {
     const validEnemyMoves = this.enemyPokemon.moves.filter((m) => m.currentPp > 0);
-    const chosenMove = validEnemyMoves.length > 0
-      ? validEnemyMoves[Math.floor(Math.random() * validEnemyMoves.length)].move
-      : this.enemyPokemon.moves[0].move;
+    // Smarter, varied AI: score by effectiveness + STAB, then pick between the
+    // two best options so the enemy does not spam the same attack every turn.
+    const scored = validEnemyMoves.map((entry) => {
+      const eff = getTypeEffectiveness(entry.move.type, this.playerPokemon.species.types);
+      const stab = this.enemyPokemon.species.types.includes(entry.move.type) ? 1.2 : 1;
+      const base = entry.move.category === 'status' ? 35 : entry.move.power;
+      return { move: entry.move, score: base * eff * stab };
+    });
+    scored.sort((a, b) => b.score - a.score);
+    const topChoices = scored.slice(0, Math.min(2, scored.length));
+    const chosenMove =
+      topChoices.length > 0
+        ? topChoices[Math.floor(Math.random() * topChoices.length)].move
+        : this.enemyPokemon.moves[0].move;
 
     this.enemyAction = { type: 'move', move: chosenMove };
 
     const playerSpeed = this.playerPokemon.stats.speed;
     const enemySpeed = this.enemyPokemon.stats.speed;
+    const playerPriority = this.playerAction?.move?.effect === 'priority';
+    const enemyPriority = chosenMove.effect === 'priority';
 
-    if (playerSpeed >= enemySpeed) {
+    const playerFirst =
+      playerPriority && !enemyPriority
+        ? true
+        : enemyPriority && !playerPriority
+          ? false
+          : playerSpeed >= enemySpeed;
+
+    if (playerFirst) {
       this.executePlayerAction(() => {
-        if (this.enemyPokemon.currentHp > 0) {
+        if (this.enemyPokemon.currentHp > 0 && this.targetEnemyHp > 0) {
           this.executeEnemyAction();
         }
       });
     } else {
       this.executeEnemyAction(() => {
-        if (this.playerPokemon.currentHp > 0) {
+        if (this.playerPokemon.currentHp > 0 && this.targetPlayerHp > 0) {
           this.executePlayerAction();
         }
       });
@@ -544,30 +584,81 @@ export class BattleSystem {
     isEnemyAttacking: boolean,
     onComplete?: () => void
   ) {
+    const finish = () => {
+      if (onComplete) onComplete();
+      else this.state = 'MAIN_MENU';
+    };
+
     if (Math.random() * 100 > move.accuracy) {
-      this.setMessage(`${attacker.species.name}'s attack missed!`, () => {
-        if (onComplete) onComplete();
-        else this.state = 'MAIN_MENU';
-      });
+      this.setMessage(`${attacker.species.name}'s attack missed!`, finish);
       return;
     }
 
     this.screenShake = 10;
     this.flashAlpha = 0.6;
 
+    // Trigger BOOM explosion effect if heavy move, Self-Destruct, or Roblox Sword
+    if (move.id === 'self_destruct' || move.id === 'roblox_sword' || move.power >= 90) {
+      this.triggerBoom(isEnemyAttacking ? 75 : 230, isEnemyAttacking ? 150 : 75);
+    }
+
+    if (attacker.species.id === 999 || defender.species.id === 999) {
+      soundManager.playRobloxOof();
+    }
+
     if (move.type === 'fire') soundManager.playSpecial('fire');
     else if (move.type === 'water') soundManager.playSpecial('water');
     else if (move.type === 'electric') soundManager.playSpecial('electric');
     else if (move.type === 'grass') soundManager.playSpecial('grass');
+    else if (move.id === 'self_destruct') soundManager.playBoom();
     else soundManager.playHit();
 
+    // --- Status moves: healing, self buffs, and enemy debuffs ---
     if (move.category === 'status') {
-      if (move.statChange) {
-        this.setMessage(`${defender.species.name}'s ${move.statChange.stat.toUpperCase()} fell!`, () => {
-          if (onComplete) onComplete();
-          else this.state = 'MAIN_MENU';
+      if (move.effect === 'heal') {
+        const before = attacker.currentHp;
+        attacker.currentHp = Math.min(attacker.maxHp, before + Math.floor(attacker.maxHp * 0.5));
+        const healed = attacker.currentHp - before;
+        if (isEnemyAttacking) this.targetEnemyHp = attacker.currentHp;
+        else this.targetPlayerHp = attacker.currentHp;
+
+        if (healed <= 0) {
+          this.setMessage(`${attacker.species.name}'s HP is already full!`, finish);
+          return;
+        }
+
+        soundManager.playHealChime();
+        this.setMessage(`${attacker.species.name} recovered ${healed} HP!`, () => {
+          this.animateHp(finish);
         });
+        return;
       }
+
+      if (move.selfStatChange) {
+        const { stat, stages } = move.selfStatChange;
+        this.applyStatChange(attacker, stat, stages);
+        soundManager.playComboHit(2);
+        const dir = stages > 0 ? 'rose' : 'fell';
+        this.setMessage(
+          `${attacker.species.name}'s ${stat.toUpperCase()} ${dir}${Math.abs(stages) > 1 ? ' sharply' : ''}!`,
+          finish
+        );
+        return;
+      }
+
+      if (move.statChange) {
+        const { stat, stages } = move.statChange;
+        this.applyStatChange(defender, stat, stages);
+        soundManager.playComboHit(1);
+        const dir = stages > 0 ? 'rose' : 'fell';
+        this.setMessage(
+          `${defender.species.name}'s ${stat.toUpperCase()} ${dir}${Math.abs(stages) > 1 ? ' sharply' : ''}!`,
+          finish
+        );
+        return;
+      }
+
+      finish();
       return;
     }
 
@@ -575,26 +666,76 @@ export class BattleSystem {
     const attackVal = move.category === 'physical' ? attacker.stats.attack : attacker.stats.special;
     const defenseVal = move.category === 'physical' ? defender.stats.defense : defender.stats.special;
 
-    const baseDamage = Math.floor(
-      ((((2 * attacker.level) / 5 + 2) * move.power * (attackVal / Math.max(1, defenseVal))) / 50 + 2) *
-        (0.85 + Math.random() * 0.15)
-    );
+    const isCrit = move.effect === 'high_crit' ? Math.random() < 0.25 : Math.random() < 0.0625;
+    const hits = move.effect === 'multi_hit' ? (Math.random() < 0.5 ? 2 : 3) : 1;
 
-    const finalDamage = Math.max(1, Math.floor(baseDamage * effectiveness));
-
-    if (isEnemyAttacking) {
-      this.targetPlayerHp = Math.max(0, this.playerPokemon.currentHp - finalDamage);
-    } else {
-      this.targetEnemyHp = Math.max(0, this.enemyPokemon.currentHp - finalDamage);
+    let totalDamage = 0;
+    for (let i = 0; i < hits; i++) {
+      let baseDamage: number;
+      if (move.effect === 'fixed') {
+        baseDamage = Math.max(1, Math.floor(attacker.level * 0.9 + move.power * 0.35));
+      } else {
+        baseDamage = Math.floor(
+          ((((2 * attacker.level) / 5 + 2) * move.power * (attackVal / Math.max(1, defenseVal))) / 50 + 2) *
+            (0.85 + Math.random() * 0.15)
+        );
+      }
+      let dmg = Math.max(1, Math.floor(baseDamage * effectiveness));
+      if (isCrit) dmg = Math.floor(dmg * 1.5);
+      totalDamage += dmg;
     }
 
+    // Combo chain: every 4th-5th successful hit becomes a burst finisher.
+    this.comboHits++;
+    const comboBurst = this.comboHits >= this.comboTarget;
+    if (comboBurst) {
+      totalDamage = Math.floor(totalDamage * 1.35);
+      this.comboHits = 0;
+      soundManager.playComboBurst();
+      this.screenShake = 16;
+      this.flashAlpha = 0.85;
+    } else {
+      soundManager.playComboHit(this.comboHits);
+    }
+
+    if (isEnemyAttacking) {
+      this.targetPlayerHp = Math.max(0, this.playerPokemon.currentHp - totalDamage);
+    } else {
+      this.targetEnemyHp = Math.max(0, this.enemyPokemon.currentHp - totalDamage);
+    }
+
+    const recoil = move.effect === 'recoil' ? Math.max(1, Math.floor(totalDamage * 0.25)) : 0;
+    const drain = move.effect === 'drain' ? Math.max(1, Math.floor(totalDamage * 0.5)) : 0;
+
     this.animateHp(() => {
-      if (effectiveness > 1.0) {
-        this.setMessage("It's super effective!", () => {
-          this.checkFaint(defender, isEnemyAttacking, onComplete);
-        });
-      } else if (effectiveness < 1.0 && effectiveness > 0) {
-        this.setMessage("It's not very effective...", () => {
+      // Drain / recoil resolve after the damage lands. Recoil never KOs the user.
+      if (drain > 0) {
+        attacker.currentHp = Math.min(attacker.maxHp, attacker.currentHp + drain);
+        if (isEnemyAttacking) this.targetEnemyHp = attacker.currentHp;
+        else this.targetPlayerHp = attacker.currentHp;
+      }
+      if (recoil > 0) {
+        attacker.currentHp = Math.max(1, attacker.currentHp - recoil);
+        if (isEnemyAttacking) this.targetEnemyHp = attacker.currentHp;
+        else this.targetPlayerHp = attacker.currentHp;
+      }
+
+      if (move.statChange && defender.currentHp > 0) {
+        this.applyStatChange(defender, move.statChange.stat, move.statChange.stages);
+      }
+
+      const parts: string[] = [];
+      if (hits > 1) parts.push(`Hit ${hits} times!`);
+      if (isCrit) parts.push('A critical hit!');
+      if (comboBurst) parts.push('COMBO BURST!');
+      if (effectiveness > 1.0) parts.push("It's super effective!");
+      else if (effectiveness < 1.0 && effectiveness > 0) parts.push("It's not very effective...");
+      if (drain > 0) parts.push(`Drained ${drain} HP!`);
+      if (recoil > 0) parts.push(`${attacker.species.name} took ${recoil} recoil!`);
+      if (move.effect === 'flinch' && Math.random() < 0.3) parts.push(`${defender.species.name} flinched!`);
+
+      if (parts.length > 0) {
+        this.setMessage(parts.join(' '), () => {
           this.checkFaint(defender, isEnemyAttacking, onComplete);
         });
       } else {
@@ -603,13 +744,22 @@ export class BattleSystem {
     });
   }
 
+  private applyStatChange(
+    target: ActivePokemon,
+    stat: 'attack' | 'defense' | 'speed',
+    stages: number
+  ) {
+    const multiplier = stages > 0 ? 1 + 0.25 * stages : Math.max(0.4, 1 + 0.18 * stages);
+    target.stats[stat] = Math.max(1, Math.floor(target.stats[stat] * multiplier));
+  }
+
   private animateHp(onComplete: () => void) {
     this.state = 'ANIMATING_HP';
     this.hpAnimCallback = onComplete;
   }
 
   private updateHpAnimation(deltaMs: number) {
-    const rate = Math.max(0.04, deltaMs * 0.05);
+    const rate = Math.max(0.4, deltaMs * 0.1);
 
     let playerHpDone = false;
     let enemyHpDone = false;
@@ -631,6 +781,10 @@ export class BattleSystem {
     }
 
     if (playerHpDone && enemyHpDone) {
+      // Guarantee exact clamp at target
+      this.playerPokemon.currentHp = this.targetPlayerHp;
+      this.enemyPokemon.currentHp = this.targetEnemyHp;
+
       const cb = this.hpAnimCallback;
       this.hpAnimCallback = null;
       if (cb) cb();
@@ -639,8 +793,17 @@ export class BattleSystem {
   }
 
   private checkFaint(defender: ActivePokemon, isEnemyAttacking: boolean, onComplete?: () => void) {
-    if (defender.currentHp <= 0) {
-      soundManager.playFaint();
+    if (defender.currentHp <= 0 || (isEnemyAttacking ? this.targetPlayerHp <= 0 : this.targetEnemyHp <= 0)) {
+      defender.currentHp = 0;
+
+      // Trigger boom shockwave on faint
+      this.triggerBoom(isEnemyAttacking ? 75 : 230, isEnemyAttacking ? 150 : 75);
+
+      if (defender.species.id === 999) {
+        soundManager.playRobloxOof();
+      } else {
+        soundManager.playFaint();
+      }
 
       if (isEnemyAttacking) {
         // Player Pokémon fainted
@@ -666,8 +829,10 @@ export class BattleSystem {
         this.setMessage(`${prefix} fainted!`, () => {
           const expGain = Math.floor((this.enemyPokemon.species.baseExp * this.enemyPokemon.level) / 7) + 14;
           this.playerPokemon.currentExp += expGain;
+          const tokenGain = Math.floor(expGain * 0.75) + 15;
+          this.playerData.expTokens = (this.playerData.expTokens || 0) + tokenGain;
 
-          this.setMessage(`${this.playerPokemon.species.name} gained ${expGain} EXP. Points!`, () => {
+          this.setMessage(`${this.playerPokemon.species.name} gained ${expGain} EXP & +${tokenGain} EXP Tokens!`, () => {
             const afterExp = () => {
               // Check if Trainer has more Pokémon!
               if (this.isTrainer && this.currentEnemyIndex + 1 < this.enemyParty.length) {
@@ -695,10 +860,28 @@ export class BattleSystem {
                   this.setMessage(`Defeated ${this.trainerName}!`, () => {
                     this.setMessage(`Player received $${this.rewardMoney} for winning!`, () => {
                       if (this.badgeReward) {
-                        this.playerData.hasBoulderBadge = true;
-                        this.playerData.badges = Math.max(1, this.playerData.badges + 1);
+                        if (this.badgeReward.includes('BOULDER')) {
+                          this.playerData.hasBoulderBadge = true;
+                        } else if (this.badgeReward.includes('CASCADE')) {
+                          this.playerData.hasCascadeBadge = true;
+                        } else if (this.badgeReward.includes('THUNDER')) {
+                          this.playerData.hasThunderBadge = true;
+                        } else if (this.badgeReward.includes('EARTH')) {
+                          this.playerData.hasEarthBadge = true;
+                        } else if (this.badgeReward.includes('FLAME')) {
+                          this.playerData.hasFireBadge = true;
+                        } else if (this.badgeReward.includes('GROVE')) {
+                          this.playerData.hasGrassBadge = true;
+                        }
+                        this.playerData.badges =
+                          (this.playerData.hasBoulderBadge ? 1 : 0) +
+                          (this.playerData.hasCascadeBadge ? 1 : 0) +
+                          (this.playerData.hasThunderBadge ? 1 : 0) +
+                          (this.playerData.hasEarthBadge ? 1 : 0) +
+                          (this.playerData.hasFireBadge ? 1 : 0) +
+                          (this.playerData.hasGrassBadge ? 1 : 0);
                         soundManager.playLevelUp();
-                        this.setMessage(`Player received the ${this.badgeReward} from Brock!`, () => {
+                        this.setMessage(`Player received the ${this.badgeReward}!`, () => {
                           this.onBattleEnd('win');
                         });
                       } else {
@@ -775,8 +958,31 @@ export class BattleSystem {
     });
   }
 
+  public triggerBoom(originX: number, originY: number) {
+    soundManager.playBoom();
+    this.screenShake = 16;
+    this.flashAlpha = 0.85;
+
+    const colors = ['#ff2200', '#ff8800', '#ffee00', '#ffffff', '#555555'];
+    for (let i = 0; i < 35; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1.5 + Math.random() * 4.5;
+      this.boomParticles.push({
+        x: originX,
+        y: originY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: 3 + Math.random() * 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 0,
+        maxLife: 300 + Math.random() * 350,
+      });
+    }
+  }
+
   // --- Render Battle Screen ---
-  public draw(ctx: CanvasRenderingContext2D, cw: number, ch: number) {
+  public draw(ctx: CanvasRenderingContext2D, cw: number, ch: number, animTimeParam?: number) {
+    const animTime = animTimeParam ?? Date.now();
     ctx.save();
 
     if (this.screenShake > 0) {
@@ -785,38 +991,70 @@ export class BattleSystem {
       ctx.translate(sx, sy);
     }
 
+    // Sky Gradient
     const skyGrad = ctx.createLinearGradient(0, 0, 0, ch * 0.65);
-    skyGrad.addColorStop(0, '#78c8e8');
-    skyGrad.addColorStop(1, '#d8f0f8');
+    skyGrad.addColorStop(0, '#5fa8d3');
+    skyGrad.addColorStop(0.7, '#a8dadc');
+    skyGrad.addColorStop(1, '#eaf4f4');
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, cw, ch * 0.65);
 
-    ctx.fillStyle = '#68b858';
+    // Dynamic Moving Clouds (Motion Background)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    for (let c = 0; c < 4; c++) {
+      const speed = 0.015 + c * 0.008;
+      const cloudX = ((animTime * speed + c * 90) % (cw + 80)) - 40;
+      const cloudY = 15 + c * 18;
+      ctx.beginPath();
+      ctx.arc(cloudX, cloudY, 18, 0, Math.PI * 2);
+      ctx.arc(cloudX + 14, cloudY - 6, 14, 0, Math.PI * 2);
+      ctx.arc(cloudX + 26, cloudY, 16, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Ground Grass with animated wind stripes
+    ctx.fillStyle = '#529b45';
     ctx.fillRect(0, ch * 0.65, cw, ch * 0.35);
 
+    // Wind ripples on battlefield grass
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    for (let g = 0; g < 6; g++) {
+      const waveX = ((animTime * 0.08 + g * 55) % (cw + 60)) - 30;
+      const waveY = ch * 0.68 + (g % 3) * 16;
+      ctx.fillRect(waveX, waveY, 32, 2);
+    }
+
     // Enemy Platform
-    ctx.fillStyle = '#98d878';
+    ctx.fillStyle = '#7cb342';
     ctx.beginPath();
     ctx.ellipse(230, 85, 60, 20, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#58a048';
+    ctx.strokeStyle = '#558b2f';
     ctx.lineWidth = 2;
     ctx.stroke();
 
     // Player Platform
-    ctx.fillStyle = '#98d878';
+    ctx.fillStyle = '#7cb342';
     ctx.beginPath();
     ctx.ellipse(75, 175, 70, 25, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#58a048';
+    ctx.strokeStyle = '#558b2f';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Draw Enemy Sprite
+    // Pokémon Motion Play: Idle breathing / bobbing animation
+    const enemyBob = Math.sin(animTime * 0.004) * 3;
+    const playerBob = Math.sin(animTime * 0.004 + 1.6) * 2.5;
+
+    // Draw Enemy Sprite with breathing motion
     if (this.state !== 'ANIMATING_CATCH' || this.catchTimer < 600) {
-      const enemyImg = SpriteLoader.getImage(this.enemyPokemon.species.spriteFront);
+      const enemyImg = SpriteLoader.getImage(
+        this.enemyPokemon.species.spriteFront,
+        this.enemyPokemon.species.id,
+        this.enemyPokemon.species.color
+      );
       if (enemyImg) {
-        ctx.drawImage(enemyImg, 185, 30, 90, 90);
+        ctx.drawImage(enemyImg, 185, 30 + enemyBob, 90, 90);
       }
     }
 
@@ -825,10 +1063,14 @@ export class BattleSystem {
       this.drawPokeBall(ctx, this.ballX, this.ballY, this.catchWobbleCount);
     }
 
-    // Draw Player Sprite (Back)
-    const playerImg = SpriteLoader.getImage(this.playerPokemon.species.spriteBack);
+    // Draw Player Sprite (Back) with breathing motion
+    const playerImg = SpriteLoader.getImage(
+      this.playerPokemon.species.spriteBack,
+      this.playerPokemon.species.id,
+      this.playerPokemon.species.color
+    );
     if (playerImg) {
-      ctx.drawImage(playerImg, 25, 105, 100, 100);
+      ctx.drawImage(playerImg, 25, 105 + playerBob, 100, 100);
     }
 
     // Enemy Status Box
@@ -837,12 +1079,43 @@ export class BattleSystem {
     // Player Status Box
     this.drawStatusBox(ctx, cw - 150, 125, this.playerPokemon, true);
 
+    // Draw Boom / Explosion particles
+    this.boomParticles.forEach((p) => {
+      const alpha = 1 - p.life / p.maxLife;
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.max(0, alpha);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius * (1 + (p.life / p.maxLife) * 0.8), 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1.0;
+
     if (this.flashAlpha > 0) {
       ctx.fillStyle = `rgba(255, 255, 255, ${this.flashAlpha})`;
       ctx.fillRect(0, 0, cw, ch);
     }
 
     ctx.restore();
+
+    // Combo meter
+    if (this.comboHits > 0 && this.state === 'MAIN_MENU') {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(10, 16, 28, 0.8)';
+      ctx.fillRect(cw / 2 - 34, 6, 68, 17);
+      ctx.strokeStyle = '#ffb300';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cw / 2 - 34, 6, 68, 17);
+      ctx.fillStyle = '#ffd54f';
+      ctx.font = 'bold 8px monospace';
+      ctx.fillText(`COMBO ${this.comboHits}/${this.comboTarget}`, cw / 2, 18);
+
+      for (let i = 0; i < this.comboTarget; i++) {
+        ctx.fillStyle = i < this.comboHits ? '#ffb300' : '#4e3b12';
+        ctx.fillRect(cw / 2 - 18 + i * 9, 21, 7, 2);
+      }
+      ctx.restore();
+    }
 
     this.drawBottomWindow(ctx, cw, ch);
   }
@@ -942,8 +1215,8 @@ export class BattleSystem {
 
     if (this.state === 'MESSAGE' || this.state === 'INTRO' || this.state === 'ANIMATING_CATCH') {
       ctx.fillStyle = '#111111';
-      ctx.font = 'bold 13px monospace';
-      ctx.fillText(this.currentMessage, 16, winY + 36);
+      ctx.font = 'bold 11px monospace';
+      this.drawWrappedMessage(ctx, this.currentMessage, 16, winY + 24, cw - 46, 17);
 
       if (this.state === 'MESSAGE') {
         const arrY = winY + winH - 16 + (Math.floor(Date.now() / 250) % 2) * 2;
@@ -1064,5 +1337,24 @@ export class BattleSystem {
       ctx.font = '10px monospace';
       ctx.fillText('[B] Back', cw - 65, winY + 20);
     }
+  }
+
+  private drawWrappedMessage(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
+    const words = text.split(' ');
+    let line = '';
+    let curY = y;
+
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0) {
+        ctx.fillText(line, x, curY);
+        line = words[n] + ' ';
+        curY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, x, curY);
   }
 }

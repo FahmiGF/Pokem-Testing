@@ -71,11 +71,20 @@ ${css}
 
         <!-- System / Help Info -->
         <div class="instructions-panel">
-          <h3>🎮 KONTROL:</h3>
-          <p><kbd>W A S D</kbd> / <kbd>↑ ↓ ← →</kbd> : Gerak / Navigasi</p>
-          <p><kbd>Z</kbd> / <kbd>Space</kbd> : [A] Aksi / Pilih / Bicara</p>
-          <p><kbd>X</kbd> : [B] Batal | <kbd>Shift</kbd> : Lari Cepat</p>
-          <p><kbd>Enter</kbd> / <kbd>Esc</kbd> : [START] Menu / Pokédex / Save</p>
+          <h3>🎮 KONTROL</h3>
+          <ul class="ctrl-list">
+            <li><span class="ctrl-keys"><kbd>WASD</kbd><kbd>↑↓←→</kbd></span><span class="ctrl-desc">Gerak / kemudi</span></li>
+            <li><span class="ctrl-keys"><kbd>Shift</kbd></span><span class="ctrl-desc">Lari (2× lebih cepat)</span></li>
+            <li><span class="ctrl-keys"><kbd>Z</kbd><kbd>Space</kbd></span><span class="ctrl-desc">[A] Aksi · gas kart · tebas Souls</span></li>
+            <li><span class="ctrl-keys"><kbd>X</kbd></span><span class="ctrl-desc">[B] Batal · rem · roll i-frames</span></li>
+            <li><span class="ctrl-keys"><kbd>1–5</kbd><kbd>C</kbd></span><span class="ctrl-desc">Quick inventory hotbar</span></li>
+            <li><span class="ctrl-keys"><kbd>R</kbd></span><span class="ctrl-desc">Naik / turun mount (Rhea di depan Lab Oak)</span></li>
+            <li><span class="ctrl-keys"><kbd>T</kbd></span><span class="ctrl-desc">Teleport semua zona</span></li>
+            <li><span class="ctrl-keys"><kbd>START</kbd></span><span class="ctrl-desc">Arcade (6 mini-game)</span></li>
+            <li><span class="ctrl-keys"><kbd>Enter</kbd><kbd>Esc</kbd></span><span class="ctrl-desc">Menu · Teleport · Arcade</span></li>
+          </ul>
+          <p class="ctrl-note">❄️ Frostpeak · ☠️ Toxic Marsh · ☁️ Sky Pillar · 🌊 Azure Shore · 🏛️ Sunken Ruins</p>
+          <p class="ctrl-note">🪙 Koin tersebar · 👑 World Boss tiap 10 menit (portal ungu) · 🌀 Teleport semua zona (gratis setelah boss)</p>
         </div>
 
         <!-- Action Buttons (A, B) & Start -->
@@ -83,14 +92,15 @@ ${css}
           <div class="action-buttons">
             <div class="btn-group">
               <button class="round-btn btn-b" data-key="b" aria-label="B Button">B</button>
-              <span class="btn-label">Batal (X)</span>
+              <span class="btn-label">Batal<br><small>B / X</small></span>
             </div>
             <div class="btn-group">
               <button class="round-btn btn-a" data-key="a" aria-label="A Button">A</button>
-              <span class="btn-label">Pilih (Z)</span>
+              <span class="btn-label">Pilih<br><small>A / Z</small></span>
             </div>
           </div>
           <div class="system-buttons">
+            <button class="pill-btn round-btn" data-key="mount" aria-label="Mount Button">MOUNT (R)</button>
             <button class="pill-btn round-btn" data-key="start" aria-label="Start Button">START</button>
           </div>
         </div>

@@ -12,6 +12,9 @@ function initGame() {
   // Initialize the game engine
   const game = new Game(canvas);
 
+  // Debug handle for automated visual testing (harmless in production).
+  (window as unknown as { __pokemonGame: Game }).__pokemonGame = game;
+
   // Sound toggle button in header
   const btnSound = document.getElementById('btn-sound') as HTMLButtonElement;
   if (btnSound) {

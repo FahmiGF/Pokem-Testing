@@ -11,7 +11,18 @@ export type PokemonType =
   | 'ground'
   | 'fighting'
   | 'psychic'
-  | 'ghost';
+  | 'ghost'
+  | 'dragon';
+
+export type MoveEffect =
+  | 'multi_hit'
+  | 'drain'
+  | 'recoil'
+  | 'heal'
+  | 'priority'
+  | 'high_crit'
+  | 'fixed'
+  | 'flinch';
 
 export interface Move {
   id: string;
@@ -23,9 +34,14 @@ export interface Move {
   maxPp: number;
   category: 'physical' | 'special' | 'status';
   description: string;
+  effect?: MoveEffect;
   statChange?: {
     stat: 'attack' | 'defense' | 'speed';
     stages: number; // positive or negative
+  };
+  selfStatChange?: {
+    stat: 'attack' | 'defense' | 'speed';
+    stages: number;
   };
 }
 
@@ -79,13 +95,37 @@ export interface ActivePokemon {
   statusEffect?: 'burn' | 'paralysis' | 'poison';
 }
 
+export type InventoryItemType =
+  | 'pokeball'
+  | 'potion'
+  | 'revive'
+  | 'seed'
+  | 'crop'
+  | 'candy'
+  | 'service'
+  | 'stone'
+  | 'booster'
+  | 'souls_gear'
+  | 'kart_gear'
+  | 'ingredient'
+  | 'dish'
+  | 'gem';
+
 export interface InventoryItem {
   id: string;
   name: string;
   count: number;
   price: number;
-  type: 'pokeball' | 'potion' | 'revive';
+  type: InventoryItemType;
   description: string;
+  icon?: string;
+  category?: 'BALL' | 'MEDICINE' | 'SPECIAL' | 'SEED' | 'SERVICE' | 'EXP_SHOP' | 'INGREDIENT' | 'DISH' | 'GEM';
+  service?: 'levelup' | 'heal' | 'speed';
+}
+
+export interface FarmPlot {
+  seedId: string | null;
+  growth: number;
 }
 
 export interface PlayerData {
@@ -95,9 +135,44 @@ export interface PlayerData {
   party: ActivePokemon[];
   inventory: InventoryItem[];
   money: number;
+  expTokens?: number;
+  gems?: number;
+  fishCaught?: number;
+  dishesCooked?: number;
+  coinsCollected?: number;
+  ownedMounts?: string[];
+  activeMount?: string | null;
+  mounted?: boolean;
+  teleportUnlocked?: boolean;
+  worldBossDefeated?: boolean;
+  worldBossWins?: number;
+  kartStats?: {
+    speedUpgrades: number;
+    nitroCharges: number;
+    wins: number;
+  };
+  soulsStats?: {
+    estusCharges: number;
+    estusLevel: number;
+    bossVictories: number;
+    swordUpgrade: number;
+    rollUpgrade: number;
+  };
   badges: number;
   hasBoulderBadge: boolean;
+  hasCascadeBadge: boolean;
+  hasThunderBadge: boolean;
+  hasEarthBadge: boolean;
+  hasFireBadge: boolean;
+  hasGrassBadge: boolean;
+  zoneId?: string;
+  farmPlots: FarmPlot[];
+  metSpecialYusti?: boolean;
+  metSpecialZaky?: boolean;
+  metSpecialDio?: boolean;
+  metSpecialZazzie?: boolean;
   seenPokemon: number[];
   caughtPokemon: number[];
   defeatedTrainers: string[];
+  arcadeHighScores?: Record<string, number>;
 }
